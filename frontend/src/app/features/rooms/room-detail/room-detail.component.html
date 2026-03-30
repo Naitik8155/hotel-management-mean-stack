@@ -1,0 +1,161 @@
+<div *ngIf="loading" class="loading-container d-flex align-items-center justify-content-center"
+  style="min-height: 80vh;">
+  <div class="spinner-border text-gold" style="color: var(--accent); width: 3rem; height: 3rem;" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
+<div class="custom-container" *ngIf="!loading && room">
+  <!-- Title and Breadcrumb -->
+  <div class="page-header">
+    <h1 class="room-title">{{ room?.roomType | titlecase }}</h1>
+    <div class="breadcrumb-container">
+      <a routerLink="/" class="breadcrumb-link">HOME</a>
+      <span class="breadcrumb-separator">&gt;</span>
+      <a routerLink="/rooms" class="breadcrumb-link">ROOMS</a>
+      <span class="breadcrumb-separator">&gt;</span>
+      <span style="color: var(--accent)">ROOM {{ room?.roomNumber }}</span>
+    </div>
+  </div>
+
+  <div class="room-details-grid">
+    <!-- Left Section for Image & Description -->
+    <div class="left-section">
+      <!-- Image Gallery -->
+      <div class="image-gallery-wrapper">
+        <div class="main-image-container" *ngIf="room?.images?.length > 0; else noImage">
+          <img [src]="resolveImageUrl(room.images[currentImageIndex])" [alt]="'Room ' + room.roomNumber"
+            class="main-image" />
+
+          <button class="nav-arrow prev-arrow" (click)="prevImage()" *ngIf="room.images.length > 1">
+            <i class="fa fa-chevron-left" style="color: white"></i>
+          </button>
+          <button class="nav-arrow next-arrow" (click)="nextImage()" *ngIf="room.images.length > 1">
+            <i class="fa fa-chevron-right" style="color: white"></i>
+          </button>
+
+          <!-- Image Indicators -->
+          <div
+            style="position: absolute; bottom: 1.5rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.5rem; z-index: 10;">
+            <div *ngFor="let img of room.images; let i = index" [style.width]="i === currentImageIndex ? '20px' : '8px'"
+              [style.height]="'8px'" [style.borderRadius]="'4px'"
+              [style.background]="i === currentImageIndex ? 'var(--accent)' : 'rgba(255,255,255,0.5)'"
+              style="transition: all 0.3s ease;">
+            </div>
+          </div>
+        </div>
+        <ng-template #noImage>
+          <div class="main-image-container no-image">
+            <img src="assets/images/placeholder.jpg" alt="No image available" class="main-image placeholder" />
+          </div>
+        </ng-template>
+      </div>
+
+      <!-- Description -->
+      <div class="description-section mt-5">
+        <p class="section-text">{{ room?.description || 'A spacious and well-appointed room featuring modern amenities and elegant design for a comfortable stay.' }}</p>
+      </div>
+
+      <!-- Amenities Section (Moved from right side for better mobile flow) -->
+      <div class="description-section mt-5 d-lg-none">
+        <h3 class="section-title">Amenities</h3>
+        <div class="d-flex flex-wrap gap-2">
+          <ng-container *ngIf="room?.amenities?.length; else defaultAmenitiesMobile">
+            <span class="info-tag badge" *ngFor="let facility of room.amenities">
+              <i class="fa me-2 text-primary" [ngClass]="getAmenityIcon(facility)"></i> {{ facility }}
+            </span>
+          </ng-container>
+          <ng-template #defaultAmenitiesMobile>
+            <span class="info-tag badge"><i class="fa fa-wifi me-2 text-primary"></i>Wifi</span>
+            <span class="info-tag badge"><i class="fa fa-snowflake me-2 text-primary"></i>AC</span>
+            <span class="info-tag badge"><i class="fa fa-utensils me-2 text-primary"></i>Restaurant</span>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Reviews -->
+      <div class="reviews-section mt-5 pt-2">
+        <h3 class="section-title">Reviews</h3>
+        <div *ngIf="reviewsCount > 0; else noReviews">
+          <div class="review-item" *ngFor="let review of [sampleReview]">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="d-flex align-items-center">
+                <div class="avatar-small me-3"
+                  style="width: 40px; height: 40px; border-radius: 50%; background: var(--bg-main); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--accent);">
+                  {{ review.guestName.charAt(0) }}
+                </div>
+                <h6 class="mb-0">{{ review.guestName }}</h6>
+              </div>
+              <div class="text-gold">
+                <i class="fa fa-star" *ngFor="let s of getStarArray(review.rating)"></i>
+              </div>
+            </div>
+            <p class="mb-0 text-muted" style="line-height: 1.6;">"{{ review.comment }}"</p>
+          </div>
+        </div>
+        <ng-template #noReviews>
+          <p class="section-text italic text-muted">No reviews yet for this room type.</p>
+        </ng-template>
+      </div>
+    </div>
+
+    <!-- Right Section for Booking Card -->
+    <div class="right-section">
+      <div class="booking-card">
+        <div class="price-header">
+          <div class="d-flex align-items-baseline">
+            <span style="font-size: 1.2rem; font-weight: 600; color: var(--accent); margin-right: 4px;">₹</span>
+            <span style="font-size: 2.5rem; font-weight: 700; color: var(--primary);">{{ room?.pricePerNight || '2,499'
+              }}</span>
+            <span style="font-size: 0.95rem; color: var(--text-muted); margin-left: 8px;">/ night</span>
+          </div>
+        </div>
+
+        <div class="info-group">
+          <h4 class="info-title">Capacity</h4>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="info-tag badge">
+              <i class="fa fa-user-friends me-2"></i>{{ room?.maxGuests || 2 }} Adults
+            </span>
+            <span class="info-tag badge">
+              <i class="fa fa-child me-2"></i>2 Children
+            </span>
+          </div>
+        </div>
+
+        <div class="info-group d-none d-lg-block">
+          <h4 class="info-title">Amenities</h4>
+          <div class="d-flex flex-wrap gap-2">
+            <ng-container *ngIf="room?.amenities?.length; else defaultAmenities">
+              <span class="info-tag badge" *ngFor="let facility of room.amenities">
+                <i class="fa me-2 text-primary" [ngClass]="getAmenityIcon(facility)"></i> {{ facility }}
+              </span>
+            </ng-container>
+            <ng-template #defaultAmenities>
+              <span class="info-tag badge"><i class="fa fa-wifi me-2 text-primary"></i>Free Wifi</span>
+              <span class="info-tag badge"><i class="fa fa-snowflake me-2 text-primary"></i>Air Conditioning</span>
+              <span class="info-tag badge"><i class="fa fa-cocktail me-2 text-primary"></i>Mini Bar</span>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="info-group">
+          <h4 class="info-title">Details</h4>
+          <div class="d-flex flex-wrap gap-2">
+            <span class="info-tag badge"><i class="fa fa-expand me-2"></i>500 sq. ft.</span>
+            <span class="info-tag badge"><i class="fa fa-layer-group me-2"></i>Floor {{ room?.floor || 4 }}</span>
+          </div>
+        </div>
+
+        <button class="btn btn-book-now" (click)="bookRoom()" [disabled]="!room?.isAvailable">
+          {{ room?.isAvailable ? 'Book Now' : 'Fully Booked' }}
+          <i class="fa fa-arrow-right ms-2" *ngIf="room?.isAvailable"></i>
+        </button>
+
+        <p class="text-center mt-3 mb-0" style="font-size: 0.8rem; color: var(--success-color); font-weight: 600;">
+          <i class="fa fa-check-circle me-1"></i> Best Price Guaranteed
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

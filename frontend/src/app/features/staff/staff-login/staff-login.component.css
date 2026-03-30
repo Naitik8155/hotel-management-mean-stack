@@ -1,0 +1,38 @@
+@import '../../auth/login/login.component.css';
+
+:host {
+  display: block;
+}
+
+.staff-portal .branding-panel {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%);
+}
+
+.password-toggle {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 5px;
+  transition: color 0.3s ease;
+  z-index: 5;
+}
+
+.password-toggle:hover {
+  color: var(--accent);
+}
+
+.auth-modes .mode-btn.admin:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+@media (max-width: 600px) {
+  .staff-portal .branding-panel {
+    display: none;
+  }
+}

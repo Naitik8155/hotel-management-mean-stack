@@ -1,0 +1,241 @@
+<div class="guests-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Guest Management</h1>
+      <p class="text-muted">Manage guest information, ID verification, and stay status</p>
+    </div>
+    <button class="btn btn-primary" (click)="loadGuests()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Search Guests:</label>
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+        placeholder="Search by name, email, or phone..." class="form-control" />
+    </div>
+
+    <div class="filter-group">
+      <label>Stay Status:</label>
+      <select [(ngModel)]="stayStatusFilter" (change)="onStatusFilterChange()" class="form-control">
+        <option value="">All Guests</option>
+        <option value="active">Currently Staying</option>
+        <option value="upcoming">Upcoming</option>
+        <option value="past">Past Guests</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading guests...</p>
+  </div>
+
+  <!-- Guests Table -->
+  <div *ngIf="!loading" class="table-card">
+    <div *ngIf="filteredGuests.length === 0" class="empty-state">
+      <i class="fas fa-users-slash"></i>
+      <p>No guests found</p>
+    </div>
+
+    <div *ngIf="filteredGuests.length > 0" class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Guest Name</th>
+            <th>Contact Details</th>
+            <th>Current Room</th>
+            <th>Stay Status</th>
+            <th>Total Bookings</th>
+            <th>ID Verification</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let guest of filteredGuests">
+            <td>
+              <strong>{{ guest.name || 'N/A' }}</strong>
+            </td>
+            <td>
+              <div class="contact-info">
+                <div><i class="fas fa-envelope"></i> {{ guest.email }}</div>
+                <div *ngIf="guest.phone"><i class="fas fa-phone"></i> {{ guest.phone }}</div>
+              </div>
+            </td>
+            <td>
+              <span class="room-badge" *ngIf="guest.currentBooking?.room">
+                Room {{ guest.currentBooking?.room?.roomNumber }}
+              </span>
+              <span class="badge badge-secondary" *ngIf="!guest.currentBooking">
+                No Active Room
+              </span>
+              <br>
+              <small class="text-muted" *ngIf="guest.currentBooking?.room">
+                {{ guest.currentBooking?.room?.roomType | titlecase }}
+              </small>
+            </td>
+            <td>
+              <span [class]="'badge ' + getStayStatusClass(guest)">
+                {{ getStayStatus(guest) }}
+              </span>
+              <br>
+              <small class="text-muted" *ngIf="guest.currentBooking">
+                {{ formatDate(guest.currentBooking.checkInDate) }} - {{ formatDate(guest.currentBooking.checkOutDate) }}
+              </small>
+            </td>
+            <td>
+              <strong>{{ guest.totalBookings || guest.bookingHistory.length || 0 }}</strong> bookings
+            </td>
+            <td>
+              <span class="badge badge-success" *ngIf="guest.isVerified">
+                <i class="fas fa-check-circle"></i> Verified
+              </span>
+              <span class="badge badge-warning" *ngIf="!guest.isVerified">
+                <i class="fas fa-exclamation-circle"></i> Pending
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-primary" (click)="openGuestDetails(guest)" title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn btn-sm btn-success" (click)="verifyGuest(guest)" [disabled]="guest.isVerified"
+                  title="Verify ID">
+                  <i class="fas fa-check"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Guest Details Modal -->
+<div class="modal" *ngIf="showGuestDetailsModal" (click)="closeGuestDetails()">
+  <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Guest Details</h3>
+      <button class="btn-close" (click)="closeGuestDetails()">&times;</button>
+    </div>
+    <div class="modal-body" *ngIf="selectedGuest">
+      <!-- Guest Info Card -->
+      <div class="guest-info-card">
+        <div class="guest-avatar">
+          <i class="fas fa-user-circle"></i>
+        </div>
+        <div class="guest-details">
+          <h4>{{ selectedGuest.name }}</h4>
+          <div class="info-row">
+            <i class="fas fa-envelope"></i>
+            <span>{{ selectedGuest.email }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedGuest.phone">
+            <i class="fas fa-phone"></i>
+            <span>{{ selectedGuest.phone }}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedGuest.address">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>{{ selectedGuest.address }}</span>
+          </div>
+        </div>
+        <div class="verification-status">
+          <span class="badge badge-success" *ngIf="selectedGuest.isVerified">
+            <i class="fas fa-check-circle"></i> Verified
+          </span>
+          <span class="badge badge-warning" *ngIf="!selectedGuest.isVerified">
+            <i class="fas fa-exclamation-circle"></i> Not Verified
+          </span>
+        </div>
+      </div>
+
+      <!-- ID Information -->
+      <div class="section-card" *ngIf="selectedGuest.idType || selectedGuest.idNumber">
+        <h5><i class="fas fa-id-card"></i> ID Information</h5>
+        <div class="id-info">
+          <div *ngIf="selectedGuest.idType">
+            <strong>ID Type:</strong> {{ selectedGuest.idType | titlecase }}
+          </div>
+          <div *ngIf="selectedGuest.idNumber">
+            <strong>ID Number:</strong> {{ selectedGuest.idNumber }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Booking -->
+      <div class="section-card" *ngIf="selectedGuest.currentBooking">
+        <h5><i class="fas fa-hotel"></i> Current Booking</h5>
+        <div class="booking-details">
+          <div class="detail-row">
+            <strong>Booking ID:</strong>
+            <span>{{ selectedGuest.currentBooking.bookingNumber || selectedGuest.currentBooking._id }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Room:</strong>
+            <span class="room-badge">
+              Room {{ selectedGuest.currentBooking.room.roomNumber }} - {{ selectedGuest.currentBooking.room.roomType |
+              titlecase }}
+            </span>
+          </div>
+          <div class="detail-row">
+            <strong>Check-In:</strong>
+            <span>{{ formatDate(selectedGuest.currentBooking.checkInDate) }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Check-Out:</strong>
+            <span>{{ formatDate(selectedGuest.currentBooking.checkOutDate) }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Status:</strong>
+            <span [class]="'badge ' + getBookingStatusBadgeClass(selectedGuest.currentBooking.bookingStatus)">
+              {{ selectedGuest.currentBooking.bookingStatus | titlecase }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Booking History -->
+      <div class="section-card">
+        <h5><i class="fas fa-history"></i> Booking History</h5>
+        <div *ngIf="!selectedGuest.bookingHistory || selectedGuest.bookingHistory.length === 0" class="text-muted">
+          No previous bookings
+        </div>
+        <div *ngIf="selectedGuest.bookingHistory && selectedGuest.bookingHistory.length > 0" class="booking-history">
+          <div class="history-item" *ngFor="let booking of selectedGuest.bookingHistory">
+            <div class="history-row">
+              <strong>{{ formatDate(booking.checkInDate) }} - {{ formatDate(booking.checkOutDate) }}</strong>
+              <span [class]="'badge ' + getBookingStatusBadgeClass(booking.bookingStatus)">
+                {{ booking.bookingStatus | titlecase }}
+              </span>
+            </div>
+            <div class="history-details">
+              Room {{ booking.room?.roomNumber || 'N/A' }} - ₹{{ booking.totalAmount | number }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-value">{{ selectedGuest.totalBookings || selectedGuest.bookingHistory.length || 0 }}</div>
+          <div class="stat-label">Total Bookings</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeGuestDetails()">Close</button>
+      <button class="btn btn-success" (click)="verifyGuest(selectedGuest!)"
+        *ngIf="selectedGuest && !selectedGuest.isVerified">
+        <i class="fas fa-check"></i> Verify Guest
+      </button>
+    </div>
+  </div>
+</div>

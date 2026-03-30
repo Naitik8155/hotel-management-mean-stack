@@ -1,0 +1,593 @@
+<div *ngIf="loading" class="loading-container">
+  <div class="spinner-border text-primary" role="status">
+    <span class="visually-hidden">Loading room details...</span>
+  </div>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb-section" *ngIf="!loading">
+  <div class="container-custom">
+    <nav aria-label="breadcrumb" class="breadcrumb-nav">
+      <a routerLink="/rooms" class="breadcrumb-link">HOME</a>
+      <span class="breadcrumb-separator">></span>
+      <span class="breadcrumb-current">{{ room?.roomType | uppercase }}</span>
+    </nav>
+    <h1 class="room-title">{{ room?.roomType | titlecase }} room</h1>
+  </div>
+</div>
+
+<div class="detail-container" *ngIf="!loading">
+  <!-- MAIN CONTENT GRID -->
+  <div class="content-grid">
+    <!-- LEFT: Image Gallery -->
+    <div class="gallery-section">
+      <div class="main-image-container" *ngIf="room?.images?.length > 0">
+        <img 
+          [src]="resolveImageUrl(room.images[currentImageIndex])" 
+          [alt]="'Room ' + room.roomNumber + ' image ' + (currentImageIndex + 1)"
+          class="main-image"
+        />
+        
+        <!-- Navigation Arrows -->
+        <div class="image-controls">
+          <button class="nav-arrow prev-arrow" (click)="prevImage()" aria-label="Previous image" *ngIf="room.images.length > 1">
+            <i class="fa fa-chevron-left"></i>
+          </button>
+          <button class="nav-arrow next-arrow" (click)="nextImage()" aria-label="Next image" *ngIf="room.images.length > 1">
+            <i class="fa fa-chevron-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Room Info Widget -->
+    <div class="info-widget">
+      <!-- Price -->
+      <div class="price-section">
+        <div class="price-display">
+          <span class="currency">₹</span><span class="amount">{{ room?.pricePerNight }}</span> <span class="period">per night</span>
+        </div>
+      </div>
+
+      <!-- Features -->
+      <div class="features-section">
+        <h4 class="section-label">Features</h4>
+        <div class="features-list">
+          <span class="feature-tag" *ngFor="let feature of getFeatures()">{{ feature }}</span>
+        </div>
+      </div>
+
+      <!-- Facilities -->
+      <div class="facilities-section">
+        <h4 class="section-label">Facilities</h4>
+        <div class="facilities-list">
+          <span class="facility-tag" *ngFor="let facility of getAmenities()">{{ facility }}</span>
+        </div>
+      </div>
+
+      <!-- Guests & Area -->
+      <div class="details-section">
+        <div class="detail-item">
+          <span class="detail-label">Guests</span>
+          <span class="detail-value">{{ room?.maxGuests }} Adults<span *ngIf="room?.maxChildren > 0">, {{ room?.maxChildren }} Children</span></span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">Area</span>
+          <span class="detail-value">{{ room?.area || '500' }} sq.ft.</span>
+        </div>
+      </div>
+
+      <!-- Book Now Button -->
+      <div class="form-group-compact">
+        <label>Check-in</label>
+        <input type="date" class="form-control" [(ngModel)]="checkInDate" />
+      </div>
+
+      <div class="form-group-compact">
+        <label>Check-out</label>
+        <input type="date" class="form-control" [(ngModel)]="checkOutDate" />
+      </div>
+
+      <div class="form-group-compact">
+        <label>Guests</label>
+          <select class="form-control" [(ngModel)]="numberOfGuests">
+            <option *ngFor="let g of guestsRange(room?.maxGuests)" [value]="g">
+              {{ g }} guest{{ g > 1 ? 's' : '' }}
+            </option>
+          </select>
+        </div>
+
+        <button 
+          class="btn btn-book-now w-100 btn-lg" 
+          (click)="bookRoom()" 
+          [disabled]="!room?.isAvailable"
+        >
+          <i class="fa fa-calendar-check me-2"></i>
+          {{ room?.isAvailable ? 'Book Now' : 'Not Available' }}
+        </button>
+      </div>
+
+      <div class="benefits-mini">
+        <div class="benefit-item-mini">
+          <i class="fa fa-check"></i> Free cancellation
+        </div>
+        <div class="benefit-item-mini">
+          <i class="fa fa-check"></i> Instant confirmation
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <!-- LEFT SECTION: Details -->
+    <div class="left-section">
+
+        <!-- Room Highlights Section -->
+        <div class="highlights-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-star me-2"></i>Room Highlights
+          </h3>
+          <div class="highlights-grid">
+            <div class="highlight-card">
+              <div class="highlight-icon-wrapper">
+                <i class="fa fa-expand"></i>
+              </div>
+              <h6 class="highlight-title">Spacious Room</h6>
+              <p class="highlight-description">Comfort and elegance combined</p>
+            </div>
+
+            <div class="highlight-card">
+              <div class="highlight-icon-wrapper">
+                <i class="fa fa-binoculars"></i>
+              </div>
+              <h6 class="highlight-title">Great Views</h6>
+              <p class="highlight-description">Beautiful vistas all around</p>
+            </div>
+
+            <div class="highlight-card">
+              <div class="highlight-icon-wrapper">
+                <i class="fa fa-trophy"></i>
+              </div>
+              <h6 class="highlight-title">Best Value</h6>
+              <p class="highlight-description">Excellent price for quality</p>
+            </div>
+
+            <div class="highlight-card">
+              <div class="highlight-icon-wrapper">
+                <i class="fa fa-star"></i>
+              </div>
+              <h6 class="highlight-title">Highly Rated</h6>
+              <p class="highlight-description">Loved by our guests</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- About Room -->
+        <div class="about-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-info-circle me-2"></i>About This Room
+          </h3>
+          <p class="description-text">{{ room?.description || 'A luxurious and comfortable room designed for your perfect stay.' }}</p>
+
+          <!-- Room Specs -->
+          <div class="specs-grid">
+            <div class="spec-item">
+              <span class="spec-label">Room Type:</span>
+              <span class="spec-value">{{ room?.roomType | titlecase }}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Max Guests:</span>
+              <span class="spec-value">{{ room?.maxGuests }} guests</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Floor:</span>
+              <span class="spec-value">{{ room?.floor }}</span>
+            </div>
+            <div class="spec-item">
+              <span class="spec-label">Status:</span>
+              <span class="spec-value" [class.available]="room?.isAvailable" [class.not-available]="!room?.isAvailable">
+                {{ room?.isAvailable ? 'Available' : 'Booked' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detailed Amenities -->
+        <div class="amenities-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-check-square me-2"></i>What's Included
+          </h3>
+          <div class="amenities-grid">
+            <ng-container *ngFor="let amenity of room?.amenities; let i = index">
+              <div class="amenity-item" [attr.data-index]="i">
+                <div class="amenity-icon-box">
+                  <i class="fa" [ngClass]="getAmenityIcon(amenity)"></i>
+                </div>
+                <div class="amenity-info">
+                  <h6 class="amenity-title">{{ amenity }}</h6>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+          <div *ngIf="!room?.amenities || room.amenities.length === 0" class="no-amenities">
+            <p>Premium amenities available in this room</p>
+          </div>
+        </div>
+
+        <!-- Policies Section -->
+        <div class="policies-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-file-text me-2"></i>Policies & Guidelines
+          </h3>
+          <div class="policies-grid">
+            <div class="policy-card">
+              <div class="policy-icon">
+                <i class="fa fa-arrow-left"></i>
+              </div>
+              <h6>Check-in</h6>
+              <p>From 2:00 PM</p>
+            </div>
+
+            <div class="policy-card">
+              <div class="policy-icon">
+                <i class="fa fa-sign-out"></i>
+              </div>
+              <h6>Check-out</h6>
+              <p>Until 11:00 AM</p>
+            </div>
+
+            <div class="policy-card">
+              <div class="policy-icon">
+                <i class="fa fa-times-circle"></i>
+              </div>
+              <h6>Cancellation</h6>
+              <p>Free up to 24 hours</p>
+            </div>
+
+            <div class="policy-card">
+              <div class="policy-icon">
+                <i class="fa fa-ban"></i>
+              </div>
+              <h6>House Rules</h6>
+              <p>Non-smoking • No pets</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Best For Section -->
+        <div class="bestfor-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-heart me-2"></i>Best For
+          </h3>
+          <div class="bestfor-container">
+            <span class="bestfor-badge">👥 Couples</span>
+            <span class="bestfor-badge">💼 Business Travelers</span>
+            <span class="bestfor-badge">👨‍👩‍👧‍👦 Families</span>
+            <span class="bestfor-badge">🎒 Solo Adventurers</span>
+          </div>
+        </div>
+
+        <!-- Guest Reviews -->
+        <div class="reviews-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-comments me-2"></i>Guest Reviews & Testimonials
+          </h3>
+
+          <!-- Reviews Summary -->
+          <div class="reviews-summary mb-4">
+            <div class="summary-item">
+              <span class="summary-label">Overall Rating:</span>
+              <div class="rating-display">
+                <i class="fa fa-star" *ngFor="let s of getStarArray(averageRating || 0)"></i>
+                <span class="rating-number">{{ averageRating || 'N/A' }}/5</span>
+              </div>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total Reviews:</span>
+              <span class="review-count-badge">{{ reviewsCount }}</span>
+            </div>
+          </div>
+
+          <!-- Individual Reviews -->
+          <div *ngIf="sampleReview" class="review-item">
+            <div class="review-header">
+              <div class="reviewer-info">
+                <div class="reviewer-avatar">{{ sampleReview.guestName?.charAt(0) || 'G' }}</div>
+                <div>
+                  <h6 class="reviewer-name">{{ sampleReview.guestName }}</h6>
+                  <span class="review-date">2 days ago</span>
+                </div>
+              </div>
+              <div class="review-rating">
+                <i class="fa fa-star" *ngFor="let s of getStarArray(sampleReview.rating)"></i>
+                <span class="rating-value">{{ sampleReview.rating }}/5</span>
+              </div>
+            </div>
+            <p class="review-text">"{{ sampleReview.comment }}"</p>
+            <div class="review-footer">
+              <span class="helpful-text">
+                <i class="fa fa-thumbs-up me-2"></i>Helpful? (12)
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="!sampleReview" class="no-reviews">
+            <div class="no-reviews-icon">
+              <i class="fa fa-star"></i>
+            </div>
+            <p class="text-muted">No reviews yet. Be the first to review this room!</p>
+            <button class="btn btn-outline-primary btn-sm">Write a Review</button>
+          </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-question-circle me-2"></i>Frequently Asked Questions
+          </h3>
+          <div class="accordion accord" id="faqAccordion">
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                  Is WiFi included in the room?
+                </button>
+              </h2>
+              <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes, high-speed WiFi is complimentary for all guests. Connection is stable and available 24/7.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                  What's included with breakfast?
+                </button>
+              </h2>
+              <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Continental breakfast for two is included daily from 6:30 AM to 10:00 AM in our dining hall.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                  Can I extend my stay?
+                </button>
+              </h2>
+              <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes, subject to availability. Please contact our front desk at least 24 hours before checkout.
+                </div>
+              </div>
+            </div>
+
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                  Is parking available?
+                </button>
+              </h2>
+              <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body">
+                  Yes, complimentary parking is available for all hotel guests. Valet service is also available.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Similar Rooms Section -->
+        <div class="similar-rooms-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-th me-2"></i>Explore Similar Rooms
+          </h3>
+          <div class="similar-rooms-container">
+            <div class="room-card-mini">
+              <div class="room-image-mini">
+                <img src="assets/images/rooms/deluxe.jpg" alt="Deluxe Suite" class="img-fluid">
+                <span class="room-badge">Popular</span>
+              </div>
+              <h6 class="room-title-mini">Deluxe Suite</h6>
+              <p class="room-desc-mini">₹4,500/night</p>
+              <button class="btn btn-sm btn-outline-primary">View Details</button>
+            </div>
+
+            <div class="room-card-mini">
+              <div class="room-image-mini">
+                <img src="assets/images/rooms/premium.jpg" alt="Premium Room" class="img-fluid">
+                <span class="room-badge hot">Hot Deal</span>
+              </div>
+              <h6 class="room-title-mini">Premium Room</h6>
+              <p class="room-desc-mini">₹3,800/night</p>
+              <button class="btn btn-sm btn-outline-primary">View Details</button>
+            </div>
+
+            <div class="room-card-mini">
+              <div class="room-image-mini">
+                <img src="assets/images/rooms/suite.jpg" alt="Executive Suite" class="img-fluid">
+              </div>
+              <h6 class="room-title-mini">Executive Suite</h6>
+              <p class="room-desc-mini">₹5,200/night</p>
+              <button class="btn btn-sm btn-outline-primary">View Details</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Booking Information Section -->
+        <div class="booking-info-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-info-circle me-2"></i>Booking Information
+          </h3>
+          <div class="info-cards-grid">
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fa fa-calendar"></i>
+              </div>
+              <h6>Flexible Dates</h6>
+              <p>Book now and adjust your dates later according to your convenience</p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fa fa-money-bill"></i>
+              </div>
+              <h6>Transparent Pricing</h6>
+              <p>No hidden charges. What you see is what you pay</p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fa fa-shield"></i>
+              </div>
+              <h6>Secure Payment</h6>
+              <p>All transactions are encrypted and secured with SSL</p>
+            </div>
+
+            <div class="info-card">
+              <div class="info-card-icon">
+                <i class="fa fa-support"></i>
+              </div>
+              <h6>24/7 Support</h6>
+              <p>Our team is always ready to help you with any queries</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Map Section -->
+        <div class="location-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-map-marker me-2"></i>Location & Proximity
+          </h3>
+          <div class="location-container">
+            <div class="map-placeholder">
+              <i class="fa fa-map"></i>
+              <p>Interactive map of hotel location</p>
+            </div>
+            <div class="proximity-list">
+              <h6 class="mb-3">Nearby Attractions:</h6>
+              <ul class="attraction-list">
+                <li><i class="fa fa-map-pin"></i> <span>City Center: 2.5 km</span></li>
+                <li><i class="fa fa-map-pin"></i> <span>Beach: 5 km</span></li>
+                <li><i class="fa fa-map-pin"></i> <span>Airport: 12 km</span></li>
+                <li><i class="fa fa-map-pin"></i> <span>Shopping Mall: 3 km</span></li>
+                <li><i class="fa fa-map-pin"></i> <span>Train Station: 8 km</span></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gallery Showcase -->
+        <div class="gallery-showcase-section mt-5">
+          <h3 class="section-title">
+            <i class="fa fa-images me-2"></i>Room Gallery
+          </h3>
+          <div class="gallery-grid">
+            <div class="gallery-item" *ngFor="let img of room?.images?.slice(0, 6); let i = index">
+              <div class="gallery-img-wrapper">
+                <img [src]="resolveImageUrl(img)" [alt]="'Room view ' + (i + 1)" class="gallery-img">
+                <div class="gallery-overlay">
+                  <button class="btn btn-sm btn-light">
+                    <i class="fa fa-plus"></i> Enlarge
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+    <!-- END LEFT SECTION -->
+
+    <!-- RIGHT SECTION: Info & Support -->
+    <aside class="right-section">
+      <!-- Room Info Card -->
+      <div class="room-info-card">
+        <h6 class="card-title">
+          <i class="fa fa-home me-2"></i>Room Information
+        </h6>
+
+        <div class="info-table">
+          <div class="info-row">
+            <span class="info-label">Room Number:</span>
+            <span class="info-value">#{{ room?.roomNumber }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Room Type:</span>
+            <span class="info-value">{{ room?.roomType | titlecase }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Max Guests:</span>
+            <span class="info-value">{{ room?.maxGuests }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Floor:</span>
+            <span class="info-value">{{ room?.floor }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">Status:</span>
+            <span class="info-value" [class.available]="room?.isAvailable" [class.not-available]="!room?.isAvailable">
+              {{ room?.isAvailable ? '✓ Available' : '✗ Booked' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support Card -->
+      <div class="support-card">
+        <h6 class="card-title">
+          <i class="fa fa-headphones me-2"></i>Need Help?
+        </h6>
+        <p>Our support team is available 24/7 to assist you</p>
+        <a href="tel:+918001234567" class="btn btn-outline-primary btn-sm w-100">
+          <i class="fa fa-phone me-2"></i>Call: +91 800-1234-567
+        </a>
+      </div>
+    </aside>
+  </div>
+  <!-- END MAIN CONTENT -->
+
+  <!-- Booking Form Modal/Expanded Section -->
+  <div class="booking-form-section mt-5" *ngIf="showBookingForm">
+    <div class="booking-form-container">
+      <h3 class="mb-4">
+        <i class="fa fa-check-circle me-2"></i>Complete Your Booking
+      </h3>
+
+      <form>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Check-in Date</label>
+            <input type="date" class="form-control" [(ngModel)]="checkInDate" name="checkInDate" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Check-out Date</label>
+            <input type="date" class="form-control" [(ngModel)]="checkOutDate" name="checkOutDate" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Number of Guests</label>
+            <input type="number" class="form-control" [(ngModel)]="numberOfGuests" name="numberOfGuests" min="1" [max]="room?.maxGuests" />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Special Requests</label>
+            <input class="form-control" [(ngModel)]="specialRequests" name="specialRequests" placeholder="Optional" />
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button type="button" class="btn btn-success btn-lg" (click)="submitBooking()">
+            <i class="fa fa-lock me-2"></i>Confirm Booking
+          </button>
+          <button type="button" class="btn btn-outline-secondary" (click)="showBookingForm = false">
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

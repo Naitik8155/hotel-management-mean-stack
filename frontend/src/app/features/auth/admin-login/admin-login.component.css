@@ -1,0 +1,68 @@
+@import '../login/login.component.css';
+
+:host {
+  display: block;
+}
+
+.admin-portal .branding-panel {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(2, 6, 23, 0.7) 100%);
+}
+
+.admin-portal .logo-area i {
+  color: #f87171;
+}
+
+.admin-btn {
+  background: linear-gradient(135deg, #dc2626 0%, #7f1d1d 100%) !important;
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.2);
+}
+
+.admin-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%) !important;
+  box-shadow: 0 20px 40px rgba(220, 38, 38, 0.4) !important;
+}
+
+.admin-portal .input-control input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+}
+
+.admin-portal .input-control i {
+  color: rgba(239, 68, 68, 0.4);
+}
+
+.admin-portal .input-control input:focus+i {
+  color: #ef4444;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 5;
+}
+
+.password-toggle i {
+  font-size: 20px;
+}
+
+.password-toggle:hover {
+  color: #ef4444;
+  transform: translateY(-50%) scale(1.1);
+}
+
+@media (max-width: 600px) {
+  .admin-portal .branding-panel {
+    display: none;
+  }
+}

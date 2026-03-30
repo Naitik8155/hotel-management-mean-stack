@@ -1,0 +1,470 @@
+<div class="bookings-management-container">
+  <!-- Header Section -->
+  <div class="management-header border-0">
+    <div class="header-content">
+      <h1>Bookings Management</h1>
+      <p class="subtitle">Manage guest reservations, view financial records, and monitor room availability.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn-refresh" (click)="loadBookings()" [disabled]="isLoading">
+        <i class="fas fa-sync-alt" [class.fa-spin]="isLoading"></i>
+        <span>{{ isLoading ? 'Synchronizing...' : 'Refresh Data' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistics Overview -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <p>Gross Volume</p>
+      <h3>₹{{ getTotalRevenue() | number:'1.0-0' }}</h3>
+      <div class="trend text-success"><i class="fas fa-arrow-up"></i> Total Revenue</div>
+      <i class="fas fa-wallet bg-icon"></i>
+    </div>
+    <div class="stat-card">
+      <p>Total Reservations</p>
+      <h3>{{ filteredBookings.length }}</h3>
+      <div class="trend text-primary"><i class="fas fa-calendar-alt"></i> Total Portfolio</div>
+      <i class="fas fa-book bg-icon"></i>
+    </div>
+    <div class="stat-card">
+      <p>Current Occupancy</p>
+      <h3>{{ getCheckedInCount() }} <small class="text-muted" style="font-size: 0.6em;">/ {{ getConfirmedBookings() }} Confirmed</small></h3>
+      <div class="trend text-info"><i class="fas fa-door-open"></i> In-House Guests</div>
+      <i class="fas fa-user-check bg-icon"></i>
+    </div>
+    <div class="stat-card">
+      <p>Pending Actions</p>
+      <h3>{{ getPendingBookings() }}</h3>
+      <div class="trend text-warning"><i class="fas fa-clock"></i> Requires Review</div>
+      <i class="fas fa-hourglass-half bg-icon"></i>
+    </div>
+  </div>
+
+  <!-- Advanced Filtering Tier -->
+  <div class="filters-section">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by Guest, ID or Email..." [(ngModel)]="searchTerm"
+        (input)="filterBookings()" />
+    </div>
+
+    <div class="filter-controls">
+      <select [(ngModel)]="selectedStatus" (change)="filterBookings()" title="Filter by Status">
+        <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="checked-in">Checked In</option>
+        <option value="checked-out">Checked Out</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+
+      <select [(ngModel)]="selectedPaymentStatus" (change)="filterBookings()" title="Filter by Payment">
+        <option value="">Payment Status</option>
+        <option value="completed">Paid</option>
+        <option value="pending">Pending</option>
+        <option value="refunded">Refunded</option>
+        <option value="failed">Failed</option>
+      </select>
+
+      <div class="d-flex gap-2 date-range">
+        <input type="date" [(ngModel)]="dateRangeStart" (change)="filterBookings()" title="From Arrival" />
+        <input type="date" [(ngModel)]="dateRangeEnd" (change)="filterBookings()" title="To Arrival" />
+      </div>
+
+      <button class="btn-reset" (click)="resetFilters()" title="Clear all filters">
+        <i class="fas fa-filter-circle-xmark"></i>
+        <span>Clear</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Primary Data Grid -->
+  <div class="bookings-table-section">
+    <div class="table-responsive">
+      <table class="table bookings-table" *ngIf="filteredBookings.length > 0">
+        <thead>
+          <tr>
+            <th>Reference</th>
+            <th>Guest</th>
+            <th>Dates</th>
+            <th>Room</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let booking of filteredBookings; let i = index" [class.row-highlight]="selectedBooking?._id === booking._id">
+            <td (click)="viewDetails(booking)">
+              <span class="booking-number">{{ booking.bookingNumber }}</span>
+            </td>
+            <td (click)="viewDetails(booking)">
+              <div class="guest-cell">
+                <span class="guest-name">{{ booking.guestName }}</span>
+                <span class="guest-email">{{ booking.guestEmail }}</span>
+              </div>
+            </td>
+            <td (click)="viewDetails(booking)">
+              <div class="timeline-info">
+                <small><i class="far fa-calendar-check me-1"></i> {{ formatDate(booking.checkInDate) }}</small>
+                <small><i class="far fa-calendar-times me-1"></i> {{ formatDate(booking.checkOutDate) }}</small>
+              </div>
+            </td>
+            <td (click)="viewDetails(booking)">
+              <span class="room-badge">
+                <i class="fas fa-door-closed me-1"></i> {{ getRoomName(booking) }}
+              </span>
+            </td>
+            <td (click)="viewDetails(booking)">
+              <div class="amount">₹{{ booking.totalAmount | number:'1.0-0' }}</div>
+              <span class="badge" [ngClass]="'badge-payment-' + booking.paymentStatus">
+                {{ (booking.paymentStatus === 'completed' ? 'Settled' : booking.paymentStatus) | titlecase }}
+              </span>
+            </td>
+            <td (click)="viewDetails(booking)">
+              <span class="badge" [ngClass]="'badge-' + booking.status">
+                <i class="fas" [ngClass]="{
+                  'fa-clock': booking.status === 'pending',
+                  'fa-check-double': booking.status === 'confirmed',
+                  'fa-key': booking.status === 'checked-in',
+                  'fa-sign-out-alt': booking.status === 'checked-out',
+                  'fa-ban': booking.status === 'cancelled'
+                }"></i>
+                {{ booking.status | titlecase }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <!-- Lifecycle Transitions -->
+                <button *ngIf="booking.status === 'pending' && !booking.roomNumber" class="btn-action btn-assign" (click)="$event.stopPropagation(); openRoomAssignModal(booking)" title="Assign Room Number">
+                  <i class="fas fa-bed"></i>
+                </button>
+
+                <button *ngIf="booking.status === 'pending'" class="btn-action btn-update" (click)="$event.stopPropagation(); confirmBooking(booking)" title="Move to Confirmed">
+                  <i class="fas fa-check"></i>
+                </button>
+                
+                <button *ngIf="booking.status === 'confirmed'" class="btn-action btn-assign" (click)="$event.stopPropagation(); checkInBooking(booking)" title="Initiate Check-in">
+                  <i class="fas fa-key"></i>
+                </button>
+
+                <button *ngIf="booking.status === 'checked-in'" class="btn-action btn-view" (click)="$event.stopPropagation(); checkOutBooking(booking)" title="Finalize Check-out">
+                  <i class="fas fa-sign-out-alt"></i>
+                </button>
+
+                <!-- Financial Overrides -->
+                <button *ngIf="booking.paymentStatus === 'pending'" class="btn-action btn-assign" (click)="$event.stopPropagation(); markAsPaid(booking)" title="Settle Balance">
+                  <i class="fas fa-hand-holding-dollar"></i>
+                </button>
+
+                <button *ngIf="booking.paymentStatus === 'completed'" class="btn-action btn-refund" (click)="$event.stopPropagation(); openRefundModal(booking)" title="Issue Refund">
+                  <i class="fas fa-rotate-left"></i>
+                </button>
+
+                <!-- Standard Tools -->
+                <button class="btn-action btn-light" (click)="$event.stopPropagation(); openStatusModal(booking)" title="Workflow Navigator">
+                  <i class="fas fa-sliders"></i>
+                </button>
+
+                <button class="btn-action btn-invoice" (click)="$event.stopPropagation(); downloadInvoice(booking)"
+                  title="Generate Invoice Dossier" [disabled]="booking.paymentStatus !== 'completed'">
+                  <i class="fas fa-print"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Modern Placeholder -->
+    <div class="empty-state" *ngIf="filteredBookings.length === 0">
+      <i class="fas fa-folder-open"></i>
+      <h3>No bookings found</h3>
+      <p>Try adjusting your search terms or filters.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Booking Details Modal -->
+<div class="modal fade" id="detailsModal" [class.show]="showDetailsModal" *ngIf="showDetailsModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-receipt me-2"></i> Booking Details
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="selectedBooking">
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Booking Reference</label>
+            <span class="form-control-static">{{ selectedBooking.bookingNumber }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Lifecycle Status</label>
+            <div>
+              <span class="badge" [ngClass]="'badge-' + selectedBooking.status">
+                {{ selectedBooking.status | titlecase }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Full Name</label>
+            <span class="form-control-static">{{ selectedBooking.guestName }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Email Address</label>
+            <span class="form-control-static">{{ selectedBooking.guestEmail }}</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Check-in Date</label>
+            <span class="form-control-static">{{ formatDate(selectedBooking.checkInDate) }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Check-out Date</label>
+            <span class="form-control-static">{{ formatDate(selectedBooking.checkOutDate) }}</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Stay Duration</label>
+            <span class="form-control-static">
+              {{ calculateNights(selectedBooking.checkInDate, selectedBooking.checkOutDate) }} Nights
+            </span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Room Allocation</label>
+            <div class="d-flex align-items-center gap-2">
+              <span class="form-control-static flex-grow-1">
+                <i class="fas fa-door-closed me-2 text-muted"></i> {{ getRoomName(selectedBooking) }}
+              </span>
+              <button *ngIf="selectedBooking.status === 'pending'" class="btn btn-sm btn-outline-primary" (click)="openRoomAssignModal(selectedBooking)" title="Change Room">
+                <i class="fas fa-exchange-alt"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Booking Value</label>
+            <span class="form-control-static text-primary font-weight-bold">₹{{ selectedBooking.totalAmount | number:'1.0-0' }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Financial Status</label>
+            <div>
+              <span class="badge" [ngClass]="'badge-payment-' + selectedBooking.paymentStatus">
+                {{ selectedBooking.paymentStatus | titlecase }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-12">
+            <label class="form-label">Operational Notes / Special Requests</label>
+            <p class="form-control-static bg-light border p-3 min-vh-10">{{ selectedBooking.specialRequests || "No specific prerequisites captured." }}</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div class="d-flex gap-2 me-auto">
+          <button type="button" class="btn btn-outline-secondary px-3" (click)="$event.stopPropagation(); downloadInvoice(selectedBooking)"
+            [disabled]="selectedBooking.paymentStatus !== 'completed'">
+            <i class="fas fa-print me-2"></i> Invoice
+          </button>
+          
+          <button *ngIf="selectedBooking.paymentStatus === 'pending'" type="button" class="btn btn-success px-3" (click)="$event.stopPropagation(); markAsPaid(selectedBooking)">
+            <i class="fas fa-hand-holding-dollar me-2"></i> Mark as Paid
+          </button>
+
+          <button *ngIf="selectedBooking.paymentStatus === 'completed'" type="button" class="btn btn-danger px-3" (click)="$event.stopPropagation(); openRefundModal(selectedBooking)">
+            <i class="fas fa-rotate-left me-2"></i> Issue Refund
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-light px-4" (click)="closeDetailsModal()">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary px-4" (click)="openStatusModal(selectedBooking)">
+          <i class="fas fa-edit me-2"></i> Update Status
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Status Update Modal -->
+<div class="modal fade" id="statusModal" [class.show]="showStatusModal" *ngIf="showStatusModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-sliders me-2"></i> Update Status
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeStatusModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="statusForm" (ngSubmit)="updateStatus()">
+        <div class="modal-body">
+          <div class="mb-4">
+            <label class="form-label">New Status *</label>
+            <select class="form-select w-100" formControlName="status"
+              [class.is-invalid]="statusForm.get('status')?.invalid && statusForm.get('status')?.touched">
+              <option value="">Select Target Status</option>
+              <option *ngFor="let status of bookingStatuses" [value]="status">
+                {{ status | titlecase }}
+              </option>
+            </select>
+            <div class="invalid-feedback" *ngIf="statusForm.get('status')?.invalid">
+              Please select a valid status.
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Internal Logs / Notes</label>
+            <textarea class="form-control w-100" formControlName="notes"
+              placeholder="Append internal comments for this status transition..." rows="4"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light px-4" (click)="closeStatusModal()">
+            Discard
+          </button>
+          <button type="submit" class="btn btn-primary px-4" [disabled]="statusForm.invalid || isSaving">
+            <span *ngIf="!isSaving">
+              Save Status
+            </span>
+            <span *ngIf="isSaving">
+              <i class="fas fa-circle-notch fa-spin me-2"></i> Saving...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Room Assignment Modal -->
+<div class="modal fade" id="roomAssignModal" [class.show]="showRoomAssignModal" *ngIf="showRoomAssignModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-key me-2"></i> Assign Room
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeRoomAssignModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="roomAssignForm" (ngSubmit)="assignRoom()">
+        <div class="modal-body">
+          <div class="mb-4">
+            <label class="form-label">Select Room *</label>
+            <select class="form-select w-100" formControlName="roomId"
+              [class.is-invalid]="roomAssignForm.get('roomId')?.invalid && roomAssignForm.get('roomId')?.touched">
+              <option value="">Select inventory...</option>
+              <ng-container *ngFor="let room of rooms">
+                <option *ngIf="room.isAvailable" [value]="room._id">
+                  Unit {{ room.roomNumber }} - {{ room.roomType | titlecase }} (₹{{ room.pricePerNight }}/night)
+                </option>
+              </ng-container>
+            </select>
+            <div class="invalid-feedback" *ngIf="roomAssignForm.get('roomId')?.invalid">
+              Selection is required for manual override.
+            </div>
+          </div>
+          <div class="alert alert-info border-0 bg-light-info small">
+            <i class="fas fa-info-circle me-2"></i> Allocating a room will transition the booking to "Confirmed" status automatically.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light px-4" (click)="closeRoomAssignModal()">
+            Discard
+          </button>
+          <button type="submit" class="btn btn-primary px-4" [disabled]="roomAssignForm.invalid || isSaving">
+            <span *ngIf="!isSaving">
+              Confirm Assignment
+            </span>
+            <span *ngIf="isSaving">
+              <i class="fas fa-circle-notch fa-spin me-2"></i> Saving...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Refund Modal -->
+<div class="modal fade" id="refundModal" [class.show]="showRefundModal" *ngIf="showRefundModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-bottom-0 pb-0">
+        <h5 class="modal-title text-danger">
+          <i class="fas fa-rotate-left me-2"></i> Process Refund
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeRefundModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-4" *ngIf="selectedBooking">
+          Initiate reversal of <strong>₹{{ selectedBooking.totalAmount | number:'1.0-0' }}</strong> for Reference
+          <code class="bg-light p-1 rounded">{{ selectedBooking.bookingNumber }}</code>?
+        </p>
+        <div class="alert alert-warning border-0 bg-light-warning">
+          <i class="fas fa-info-circle me-2 text-warning"></i> This action will mark payment as "Refunded" and the booking as "Cancelled". This lifecycle step is irreversible.
+        </div>
+      </div>
+      <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn btn-light px-4" (click)="closeRefundModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger px-4" (click)="processRefund()" [disabled]="isSaving">
+          <span *ngIf="!isSaving">
+            Execute Refund
+          </span>
+          <span *ngIf="isSaving">
+            <i class="fas fa-circle-notch fa-spin me-2"></i> Reversing
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Backdrop -->
+<div class="modal-backdrop fade"
+  [class.show]="showDetailsModal || showStatusModal || showRoomAssignModal || showRefundModal"
+  *ngIf="showDetailsModal || showStatusModal || showRoomAssignModal || showRefundModal"></div>
+
+<!-- Notifications -->
+<div class="toast-container">
+  <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage">
+    <i class="fas fa-check-circle me-3"></i>
+    <span>{{ successMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="successMessage = ''">
+      <i class="fas fa-times text-success"></i>
+    </button>
+  </div>
+  <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle me-3"></i>
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="errorMessage = ''">
+      <i class="fas fa-times text-danger"></i>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,252 @@
+.dashboard-container {
+  background-color: #f8fafc;
+  min-height: 100vh;
+  padding-bottom: 5rem;
+}
+
+.welcome-banner {
+  background: linear-gradient(135deg, var(--primary) 0%, #1e293b 100%);
+  padding: 6rem 0 8rem;
+  color: white;
+  margin-bottom: -5rem;
+}
+
+.welcome-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  color: white;
+
+}
+
+.welcome-subtitle {
+  font-size: 1.1rem;
+  opacity: 0.8;
+  letter-spacing: 1px;
+}
+
+/* Profile Quick View */
+.profile-card-v2 {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  height: 100%;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-group-v2 {
+  margin-bottom: 2rem;
+}
+
+.info-group-v2:last-child {
+  margin-bottom: 0;
+}
+
+.info-label-v2 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.info-value-v2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+}
+
+/* Stats Section */
+.stat-card-v2 {
+  background: white;
+  padding: 2rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  height: 100%;
+}
+
+.stat-card-v2:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--accent);
+}
+
+.stat-icon-v2 {
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stat-icon-v2.primary {
+  background: rgba(15, 23, 42, 0.1);
+  color: var(--primary);
+}
+
+.stat-icon-v2.accent {
+  background: rgba(197, 160, 89, 0.1);
+  color: var(--accent);
+}
+
+.stat-icon-v2.success {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.stat-info-v2 h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.stat-info-v2 p {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Bookings List */
+.section-header-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+}
+
+.section-header-v2 h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2rem;
+  margin: 0;
+  color: var(--primary);
+}
+
+.booking-card-v2 {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  margin-bottom: 2rem;
+}
+
+.booking-card-v2:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #e2e8f0;
+}
+
+.booking-card-content {
+  padding: 2rem;
+}
+
+.booking-main-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.booking-id-v2 {
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: var(--accent);
+  letter-spacing: 1px;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.booking-room-v2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.status-tag-v2 {
+  padding: 0.4rem 1rem;
+  border-radius: 99px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-tag-v2.confirmed {
+  background: #ecfdf5;
+  color: #059669;
+}
+
+.status-tag-v2.pending {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.status-tag-v2.cancelled {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.booking-details-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.detail-item-v2 span {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.detail-item-v2 p {
+  font-weight: 600;
+  margin: 0;
+  color: var(--primary);
+}
+
+.booking-footer-v2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1.5rem;
+}
+
+.amount-v2 small {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.amount-v2 h4 {
+  margin: 0;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+@media (max-width: 768px) {
+  .booking-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .welcome-title {
+    font-size: 2.2rem;
+  }
+}

@@ -1,0 +1,237 @@
+<div class="cms-management-container">
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Content Management</h1>
+      <p class="subtitle">Manage banners, testimonials, and hotel information</p>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'banners'" (click)="switchTab('banners')">
+        <i class="fas fa-image"></i> Banners
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'testimonials'" (click)="switchTab('testimonials')">
+        <i class="fas fa-star"></i> Testimonials
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" [class.active]="activeTab === 'hotel'" (click)="switchTab('hotel')">
+        <i class="fas fa-hotel"></i> Hotel Details
+      </a>
+    </li>
+  </ul>
+
+  <div *ngIf="activeTab === 'banners'" class="tab-content">
+    <div class="d-flex justify-content-end mb-3">
+      <button class="btn btn-primary" (click)="openBannerForm()">
+        <i class="fas fa-plus"></i> Add Banner
+      </button>
+    </div>
+    <div class="banners-grid">
+      <div class="banner-card" *ngFor="let banner of banners">
+        <img [src]="banner.imageUrl" [alt]="banner.title" class="banner-image" />
+        <div class="banner-info">
+          <h4>{{ banner.title }}</h4>
+          <p>{{ banner.description }}</p>
+          <span class="badge" [ngClass]="banner.isActive ? 'badge-success' : 'badge-secondary'">
+            {{ banner.isActive ? 'Active' : 'Inactive' }}
+          </span>
+          <div class="banner-actions">
+            <button class="btn btn-sm btn-warning" (click)="editBanner(banner)">
+              <i class="fas fa-edit"></i> Edit
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="deleteBanner(banner)">
+              <i class="fas fa-trash"></i> Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'testimonials'" class="tab-content">
+    <table class="table table-hover" *ngIf="testimonials.length > 0">
+      <thead>
+        <tr>
+          <th>Guest</th>
+          <th>Rating</th>
+          <th>Comment</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let testimonial of testimonials">
+          <td>{{ testimonial.guestName }}</td>
+          <td>
+            <span *ngFor="let star of [1,2,3,4,5]">
+              <i class="fas fa-star" [class.text-warning]="star <= testimonial.rating"
+                [class.text-muted]="star > testimonial.rating"></i>
+            </span>
+          </td>
+          <td>{{ testimonial.comment }}</td>
+          <td>
+            <span class="badge"
+              [ngClass]="testimonial.status === 'approved' ? 'badge-success' : testimonial.status === 'pending' ? 'badge-warning' : 'badge-danger'">
+              {{ testimonial.status | titlecase }}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-success me-2" (click)="approveTestimonial(testimonial)"
+              *ngIf="testimonial.status === 'pending'">
+              <i class="fas fa-check"></i> Approve
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="rejectTestimonial(testimonial)"
+              *ngIf="testimonial.status === 'pending'">
+              <i class="fas fa-times"></i> Reject
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="empty-state" *ngIf="testimonials.length === 0">
+      <i class="fas fa-comments"></i>
+      <h3>No Testimonials</h3>
+    </div>
+  </div>
+
+  <div *ngIf="activeTab === 'hotel'" class="tab-content">
+    <form [formGroup]="hotelForm" (ngSubmit)="saveHotelDetails()" class="hotel-form">
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Hotel Name *</label>
+          <input type="text" class="form-control" formControlName="name" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">City *</label>
+          <input type="text" class="form-control" formControlName="city" />
+        </div>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Description *</label>
+        <textarea class="form-control" formControlName="description" rows="3"></textarea>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Address *</label>
+        <textarea class="form-control" formControlName="address" rows="2"></textarea>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Phone *</label>
+          <input type="text" class="form-control" formControlName="phone" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Email *</label>
+          <input type="email" class="form-control" formControlName="email" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Check-in Time *</label>
+          <input type="time" class="form-control" formControlName="checkInTime" />
+        </div>
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Check-out Time *</label>
+          <input type="time" class="form-control" formControlName="checkOutTime" />
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-lg" [disabled]="hotelForm.invalid || isSaving">
+        <span *ngIf="!isSaving"><i class="fas fa-save"></i> Save Changes</span>
+        <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="modal fade" [class.show]="showBannerForm" *ngIf="showBannerForm">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="fas fa-image"></i> {{ editBannerMode ? 'Edit' : 'Add' }} Banner</h5>
+        <button type="button" class="btn-close" (click)="closeBannerForm()"></button>
+      </div>
+      <form [formGroup]="bannerForm" (ngSubmit)="saveBanner()">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Title *</label>
+            <input type="text" class="form-control" formControlName="title" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description *</label>
+            <input type="text" class="form-control" formControlName="description" />
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Banner Image *</label>
+            <div class="image-upload-wrapper">
+              <div class="current-image-preview" *ngIf="bannerForm.get('imageUrl')?.value && !selectedFile">
+                <img [src]="bannerForm.get('imageUrl')?.value" alt="Current Banner" />
+                <p class="text-muted small">Current Image</p>
+              </div>
+              <div class="selected-file-name" *ngIf="selectedFile">
+                <i class="fas fa-file-image"></i> {{ selectedFile.name }}
+                <button type="button" class="btn btn-sm btn-link text-danger"
+                  (click)="removeSelectedFile()">Remove</button>
+              </div>
+              <input type="file" class="form-control" (change)="onFileSelected($event)" accept="image/*" #fileInput
+                style="display: none" />
+              <button type="button" class="btn btn-outline-primary w-100" (click)="fileInput.click()">
+                <i class="fas fa-upload"></i> {{ bannerForm.get('imageUrl')?.value ? 'Change Image' : 'Upload Image' }}
+              </button>
+            </div>
+            <div *ngIf="bannerForm.get('imageUrl')?.invalid && bannerForm.get('imageUrl')?.touched"
+              class="text-danger small mt-1">
+              Image is required
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CTA Link</label>
+              <input type="text" class="form-control" formControlName="ctaLink" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">CTA Text *</label>
+              <input type="text" class="form-control" formControlName="ctaText" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Priority (1-10) *</label>
+              <input type="number" class="form-control" formControlName="priority" min="1" max="10" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Status</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" formControlName="isActive" />
+                <label class="form-check-label">Active</label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeBannerForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="bannerForm.invalid || isSaving">
+            <span *ngIf="!isSaving"><i class="fas fa-save"></i> Save Banner</span>
+            <span *ngIf="isSaving"><i class="fas fa-spinner fa-spin"></i> Saving...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop fade" [class.show]="showBannerForm" *ngIf="showBannerForm"></div>
+
+<div class="toast-container">
+  <div class="alert alert-success alert-dismissible fade show" *ngIf="successMessage" role="alert">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button type="button" class="btn-close" (click)="successMessage = ''"></button>
+  </div>
+  <div class="alert alert-danger alert-dismissible fade show" *ngIf="errorMessage" role="alert">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button type="button" class="btn-close" (click)="errorMessage = ''"></button>
+  </div>
+</div>

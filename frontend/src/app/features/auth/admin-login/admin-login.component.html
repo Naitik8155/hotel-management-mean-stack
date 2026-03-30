@@ -1,0 +1,89 @@
+<div class="login-page-container admin-portal">
+  <div class="auth-background">
+    <div class="overlay"></div>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+  </div>
+
+  <div class="auth-card-wrapper animate-fade-in-up">
+    <div class="auth-card">
+      <!-- Left Branding Panel -->
+      <div class="branding-panel">
+        <div class="branding-content">
+          <div class="logo-area">
+            <i class="fas fa-shield-check"></i>
+            <span class="hotel-name">LUXE <span>HAVEN</span></span>
+          </div>
+          <h1>Command Center</h1>
+          <p>The helm of luxury. Secure administrative gateway for complete hotel ecosystem management.</p>
+
+          <ul class="branding-features">
+            <li><i class="fas fa-microchip"></i> Advanced System Control</li>
+            <li><i class="fas fa-user-shield"></i> High-Level Security Proxy</li>
+            <li><i class="fas fa-analytics"></i> Global Revenue Insights</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Form Panel -->
+      <div class="form-panel">
+        <div class="form-content">
+          <div class="form-header">
+            <h2>Admin Sign In</h2>
+            <p>Cryptographic authentication required</p>
+          </div>
+
+          <!-- Mode Selection -->
+          <div class="auth-modes">
+            <button type="button" class="mode-btn" routerLink="/auth/login">Guest</button>
+            <button type="button" class="mode-btn" routerLink="/staff/login">Staff</button>
+            <button type="button" class="mode-btn admin active">Admin</button>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+            <div class="input-field">
+              <label for="email">Admin Identifier</label>
+              <div class="input-control">
+                <i class="far fa-user-secret"></i>
+                <input type="email" id="email" formControlName="email" placeholder="root@luxehaven.com"
+                  [class.invalid]="email?.invalid && email?.touched" />
+              </div>
+              <div *ngIf="email?.invalid && email?.touched" class="validation-msg">
+                <span *ngIf="email?.errors?.['required']">ID is mandatory</span>
+                <span *ngIf="email?.errors?.['email']">Use official admin format</span>
+              </div>
+            </div>
+
+            <div class="input-field">
+              <label for="password">Security Protocol</label>
+              <div class="input-control">
+                <i class="far fa-fingerprint"></i>
+                <input [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password"
+                  placeholder="••••••••" [class.invalid]="password?.invalid && password?.touched" />
+                <button type="button" class="password-toggle" (click)="togglePassword()">
+                  <i [class]="showPassword ? 'far fa-eye-slash' : 'far fa-eye'"></i>
+                </button>
+              </div>
+              <div *ngIf="password?.invalid && password?.touched" class="validation-msg">
+                <span *ngIf="password?.errors?.['required']">Protocol key missing</span>
+              </div>
+            </div>
+
+            <div *ngIf="errorMessage" class="error-alert">
+              <i class="fas fa-radiation"></i> {{ errorMessage }}
+            </div>
+
+            <button type="submit" class="auth-submit-btn admin-btn" [disabled]="loading">
+              <span *ngIf="!loading">Unlock Control Panel <i class="fas fa-terminal"></i></span>
+              <span *ngIf="loading" class="btn-spinner"></span>
+            </button>
+          </form>
+
+          <footer class="auth-footer">
+            <p><a routerLink="/"><i class="fas fa-home"></i> Master Terminal Home</a></p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

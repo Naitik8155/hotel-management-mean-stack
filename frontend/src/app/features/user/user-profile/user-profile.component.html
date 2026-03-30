@@ -1,0 +1,308 @@
+<div class="user-profile-wrapper" [ngClass]="{ 'profile-removed': isDeleted }">
+  <!-- Profile Header -->
+  <div class="profile-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-8">
+          <span class="header-subtitle">GUEST PORTAL</span>
+          <h1 class="header-title">My Profile</h1>
+          <p class="mb-0 opacity-75">Manage your personal details, security settings, and stay preferences.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container mt-n4">
+    <!-- Alerts -->
+    <div class="mb-4" *ngIf="successMessage || errorMessage">
+      <div *ngIf="successMessage"
+        class="alert alert-success border-0 shadow-sm rounded-4 py-3 d-flex align-items-center">
+        <i class="fas fa-check-circle me-3"></i>
+        <span>{{ successMessage }}</span>
+      </div>
+      <div *ngIf="errorMessage" class="alert alert-danger border-0 shadow-sm rounded-4 py-3 d-flex align-items-center">
+        <i class="fas fa-exclamation-circle me-3"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <!-- Sidebar -->
+      <div class="col-lg-4 col-xl-3">
+        <div class="profile-card sticky" style="top: 100px;">
+          <!-- Profile Picture -->
+          <div class="profile-pic-section">
+            <div class="profile-picture">
+              <img [src]="resolveImageUrl(profilePicturePreview) || 'https://i.pravatar.cc/300?u=' + currentUser?.email"
+                alt="{{ currentUser?.name }}" class="avatar">
+              <div class="online-indicator"></div>
+            </div>
+            <h5 class="user-name">{{ currentUser?.name }}</h5>
+            <p class="user-email">{{ currentUser?.email }}</p>
+
+            <div class="mt-3 d-flex justify-content-center gap-2">
+              <span class="badge bg-dark text-accent px-3 py-2 rounded-pill" style="font-size: 0.65rem;">GOLD
+                MEMBER</span>
+            </div>
+          </div>
+
+          <!-- Vertical Tabs Navigation -->
+          <nav class="sidebar-nav">
+            <button class="nav-item" [ngClass]="{ active: activeTab === 'profile' }" (click)="setActiveTab('profile')">
+              <i class="fas fa-user-circle"></i>
+              <span>Personal Info</span>
+            </button>
+            <button class="nav-item" [ngClass]="{ active: activeTab === 'password' }"
+              (click)="setActiveTab('password')">
+              <i class="fas fa-shield-alt"></i>
+              <span>Security</span>
+            </button>
+            <button class="nav-item" [ngClass]="{ active: activeTab === 'preferences' }"
+              (click)="setActiveTab('preferences')">
+              <i class="fas fa-concierge-bell"></i>
+              <span>Preferences</span>
+            </button>
+            <hr class="my-2 opacity-5">
+            <button class="nav-item text-danger" (click)="logout()">
+              <i class="fas fa-sign-out-alt"></i>
+              <span>Sign Out</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="col-lg-8 col-xl-9">
+
+        <!-- Identity Tab -->
+        <div class="tab-content" *ngIf="activeTab === 'profile'">
+          <div class="content-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <div>
+                <h2 class="card-title">Personal Information</h2>
+                <p class="card-subtitle">Manage your profile and contact details</p>
+              </div>
+              <button *ngIf="!editMode" class="btn btn-outline btn-sm" (click)="enableEdit()">
+                <i class="fas fa-edit me-2"></i> Edit Profile
+              </button>
+            </div>
+
+            <form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Full Name</label>
+                  <input type="text" class="form-control" formControlName="name" [disabled]="!editMode">
+                  <div class="error-msg" *ngIf="isFieldInvalid(profileForm, 'name')">{{ getFieldError('profileForm',
+                    'name') }}</div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Electronic Mail</label>
+                  <input type="email" class="form-control" formControlName="email" [disabled]="true">
+                  <small class="text-muted"><i class="fa fa-lock small me-1"></i> Email cannot be changed</small>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Phone Number</label>
+                  <input type="tel" class="form-control" formControlName="phone" [disabled]="!editMode">
+                  <div class="error-msg" *ngIf="isFieldInvalid(profileForm, 'phone')">{{ getFieldError('profileForm',
+                    'phone') }}</div>
+                </div>
+              </div>
+
+              <div formGroupName="address">
+                <h6 class="section-title">Address</h6>
+                <div class="form-row">
+                  <div class="form-group col-12">
+                    <label class="form-label">Street Address</label>
+                    <input type="text" class="form-control" formControlName="street" [disabled]="!editMode">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">City</label>
+                    <input type="text" class="form-control" formControlName="city" [disabled]="!editMode">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">State / Province</label>
+                    <input type="text" class="form-control" formControlName="state" [disabled]="!editMode">
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Country</label>
+                    <input type="text" class="form-control" formControlName="country" [disabled]="!editMode">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Postal Code</label>
+                    <input type="text" class="form-control" formControlName="zipCode" [disabled]="!editMode">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Profile Picture Upload (Only in Edit Mode) -->
+              <div class="mt-5" *ngIf="editMode">
+                <h6 class="section-title">Profile Picture</h6>
+                <div class="picture-upload-area">
+                  <div class="picture-preview" *ngIf="profilePicturePreview">
+                    <img [src]="resolveImageUrl(profilePicturePreview)" class="preview-img" alt="Preview">
+                  </div>
+                  <div class="upload-controls">
+                    <label class="btn btn-outline mb-0">
+                      <input type="file" accept="image/*" (change)="onProfilePictureSelected($event)" hidden>
+                      <i class="fas fa-camera me-2"></i> Choose Image
+                    </label>
+                    <button type="button" class="btn btn-primary-gradient" (click)="uploadProfilePicture()"
+                      [disabled]="!selectedProfilePicture || isUploadingPicture">
+                      <i class="fas fa-cloud-upload-alt me-2"></i> {{ isUploadingPicture ? 'Uploading...' : 'Upload' }}
+                    </button>
+                    <button type="button" class="btn btn-outline" (click)="removeProfilePictureSelection()"
+                      *ngIf="selectedProfilePicture">
+                      Cancel
+                    </button>
+                  </div>
+                  <p class="small text-muted mb-0 mt-3">Recommended: Square format JPEG or PNG, max 2MB.</p>
+                </div>
+              </div>
+
+              <div class="form-actions mt-5 pt-4 border-top" *ngIf="editMode">
+                <button type="submit" class="btn btn-primary-gradient" [disabled]="profileForm.invalid || isLoading">
+                  {{ isLoading ? 'Saving...' : 'Save Changes' }}
+                </button>
+                <button type="button" class="btn btn-outline ms-3" (click)="cancelEdit()">
+                  Discard
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div class="tab-content" *ngIf="activeTab === 'password'">
+          <div class="content-card">
+            <div class="card-header">
+              <h2 class="card-title">Security</h2>
+              <p class="card-subtitle">Manage your password and account security</p>
+            </div>
+
+            <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+              <div class="form-group col-md-8 mx-auto">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-control" formControlName="currentPassword">
+                <div class="error-msg" *ngIf="isFieldInvalid(passwordForm, 'currentPassword')">{{
+                  getFieldError('passwordForm', 'currentPassword') }}</div>
+              </div>
+
+              <div class="form-group col-md-8 mx-auto">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-control" formControlName="newPassword">
+                <div class="error-msg" *ngIf="isFieldInvalid(passwordForm, 'newPassword')">{{
+                  getFieldError('passwordForm', 'newPassword') }}</div>
+              </div>
+
+              <div class="form-group col-md-8 mx-auto">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-control" formControlName="confirmPassword">
+                <div class="error-msg" *ngIf="passwordForm.errors?.['passwordMismatch']">Passwords do not match</div>
+              </div>
+
+              <div class="text-center mt-5 pt-4 border-top">
+                <button type="submit" class="btn btn-primary-gradient" [disabled]="passwordForm.invalid || isLoading">
+                  Update Password
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Preferences Tab -->
+        <div class="tab-content" *ngIf="activeTab === 'preferences'">
+          <div class="content-card">
+            <div class="card-header">
+              <h2 class="card-title">Preferences</h2>
+              <p class="card-subtitle">Customize how we communicate with you</p>
+            </div>
+
+            <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
+              <div class="preference-item">
+                <div class="preference-info">
+                  <h6>Email correspondence</h6>
+                  <p>Receive booking confirmations and updates via email.</p>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="emailNotif" formControlName="emailNotifications" class="toggle-checkbox">
+                  <label for="emailNotif" class="toggle-label"></label>
+                </div>
+              </div>
+
+              <div class="preference-item">
+                <div class="preference-info">
+                  <h6>Bespoke Offers</h6>
+                  <p>Be the first to hear about special offers and events.</p>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="marketingEmail" formControlName="marketingEmails" class="toggle-checkbox">
+                  <label for="marketingEmail" class="toggle-label"></label>
+                </div>
+              </div>
+
+              <div class="preference-item">
+                <div class="preference-info">
+                  <h6>SMS Notifications</h6>
+                  <p>Receive check-in reminders and room updates via SMS.</p>
+                </div>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="smsNotif" formControlName="smsNotifications" class="toggle-checkbox">
+                  <label for="smsNotif" class="toggle-label"></label>
+                </div>
+              </div>
+
+              <div class="text-center mt-5 pt-4 border-top">
+                <button type="submit" class="btn btn-primary-gradient" [disabled]="preferencesLoading">
+                  Save Preferences
+                </button>
+              </div>
+
+              <!-- Danger Zone -->
+              <div class="danger-zone">
+                <div class="danger-header">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <h6>Delete Account</h6>
+                </div>
+                <p class="small text-muted mb-4">Deleting your account will permanently remove your booking history, loyalty points, and preferences. This action cannot be undone.</p>
+                <button type="button" class="btn btn-danger" (click)="confirmDeleteAccount()">
+                  Delete Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Deletion Confirmation Modal -->
+<div class="modal fade" [ngClass]="{'show d-block': showDeleteConfirm}"
+  style="background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 shadow-xl">
+      <div class="modal-body p-5 text-center">
+        <div class="text-danger mb-4">
+          <i class="fas fa-exclamation-circle fa-4x opacity-25"></i>
+        </div>
+        <h4 class="font-playfair display-6 mb-3">Delete Account?</h4>
+        <p class="text-muted">Are you sure you want to delete your account? This will permanently remove all your data and booking history.</p>
+
+        <div class="mt-5 d-flex gap-3 justify-content-center">
+          <button class="btn btn-outline px-4" (click)="cancelDelete()">Keep My Account</button>
+          <button class="btn btn-danger px-4" (click)="deleteAccount()" [disabled]="isDeleting">
+            {{ isDeleting ? 'Processing...' : 'Confirm Deletion' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

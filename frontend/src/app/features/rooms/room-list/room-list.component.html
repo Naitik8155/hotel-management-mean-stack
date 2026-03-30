@@ -1,0 +1,165 @@
+<!-- Hero Section -->
+<div class="hero-section">
+  <div class="hero-content">
+    <h1>Our Accommodations</h1>
+    <p>Discover handpicked rooms and suites designed for your comfort.</p>
+  </div>
+</div>
+
+<div class="container pb-5">
+  <!-- Filter Section -->
+  <div class="filter-section mt-5 mb-5">
+    <div class="filter-header">
+      <h3 class="mb-0">
+        <i class="fa fa-sliders"></i> Filters
+      </h3>
+    </div>
+
+    <div class="row g-4 mt-2">
+      <div class="col-md-3">
+        <div class="filter-group">
+          <label>Room Type</label>
+          <div class="icon-select">
+            <i class="fa fa-door-open"></i>
+            <select class="form-select" [(ngModel)]="roomType" (change)="onFilterChange()">
+              <option value="">All Types</option>
+              <option *ngFor="let type of roomTypes" [value]="type">{{ type | titlecase }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="filter-group">
+          <label>Min Price</label>
+          <div class="icon-select">
+            <i class="fa fa-rupee-sign"></i>
+            <input type="number" class="form-control" [(ngModel)]="minPrice" (change)="onFilterChange()"
+              placeholder="Min Price" />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="filter-group">
+          <label>Max Price</label>
+          <div class="icon-select">
+            <i class="fa fa-rupee-sign"></i>
+            <input type="number" class="form-control" [(ngModel)]="maxPrice" (change)="onFilterChange()"
+              placeholder="Max Price" />
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-3">
+        <div class="filter-group">
+          <label>Availability</label>
+          <div class="icon-select">
+            <i class="fa fa-calendar-alt"></i>
+            <select class="form-select" [(ngModel)]="isAvailable" (change)="onFilterChange()">
+              <option value="">All Statuses</option>
+              <option value="true">Available</option>
+              <option value="false">Occupied</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+      <button class="btn btn-reset" (click)="resetFilters()">
+        <i class="fa fa-sync-alt me-2"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading & Empty States -->
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border" style="color: var(--accent); width: 3rem; height: 3rem;" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="text-muted mt-3">Loading rooms...</p>
+  </div>
+
+  <div *ngIf="!loading && rooms.length === 0" class="text-center py-5">
+    <i class="fa fa-search fa-4x mb-4" style="color: var(--text-muted); opacity: 0.3;"></i>
+    <h4>No rooms found</h4>
+    <p class="text-muted">Try adjusting your filters to see more options.</p>
+    <button class="btn btn-accent mt-3" (click)="resetFilters()">Clear Filters</button>
+  </div>
+
+  <!-- Rooms Grid -->
+  <div class="rooms-section" *ngIf="!loading && rooms.length > 0">
+    <div class="section-header mb-5">
+      <span class="text-muted">{{ rooms.length }} rooms found</span>
+      <h3>Available Rooms</h3>
+    </div>
+
+    <div class="row g-5">
+      <div class="col-md-6 col-lg-4" *ngFor="let room of rooms">
+        <div class="room-card">
+          <div class="card-img-wrapper" (click)="viewRoomDetails(room._id)" role="button">
+            <img [src]="resolveImageUrl(room.images?.[0]) || 'assets/room-placeholder.jpg'"
+              [alt]="room.name || room.roomType" class="room-image" />
+
+            <div *ngIf="room.isAvailable" class="status-badge available"
+              style="position: absolute; top: 1rem; left: 1rem; background: #10b981; color: white; padding: 4px 12px; border-radius: 4px; font-size: 0.7rem; font-weight: 700;">
+              AVAILABLE
+            </div>
+          </div>
+
+          <div class="card-content">
+            <h3 class="room-title">{{ room.name || (room.roomType | titlecase) }}</h3>
+            <div class="room-price">₹{{ room.pricePerNight }}</div>
+
+            <div class="room-guests">
+              <i class="fa fa-users"></i>
+              <span>{{ room.maxAdults || room.maxGuests }} Adults</span>
+              <span *ngIf="room.maxChildren"> • {{ room.maxChildren }} Children</span>
+            </div>
+
+            <div class="room-features">
+              <span *ngFor="let f of (room.features?.slice(0,3) || [])" class="feature-badge">{{ f }}</span>
+            </div>
+
+            <div class="room-rating" *ngIf="room.rating">
+              <i class="fa fa-star" *ngFor="let s of getStarArray(room.rating)"></i>
+            </div>
+
+            <div class="d-flex gap-2 mt-auto">
+              <button class="btn btn-book" (click)="bookRoom(room)">Book Now</button>
+              <button class="btn btn-details" [routerLink]="['/rooms', room._id]">View Details</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Information Section -->
+  <div class="mt-5 pt-5 border-top">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="info-card">
+          <div class="info-icon"><i class="fa fa-shield-alt"></i></div>
+          <h6>Peace of Mind</h6>
+          <p class="small text-muted">Secured reservations and transparent cancellation policies.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="info-card">
+          <div class="info-icon"><i class="fa fa-bolt"></i></div>
+          <h6>Instant Access</h6>
+          <p class="small text-muted">Receive your booking confirmation instantly via email.</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="info-card">
+          <div class="info-icon"><i class="fa fa-headset"></i></div>
+          <h6>Dedicated Concierge</h6>
+          <p class="small text-muted">Our support team is here for you 24/7 during your stay.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,262 @@
+<div class="settings-container">
+  <!-- Header System -->
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Hotel Settings</h1>
+      <p class="subtitle">Manage hotel configurations, security preferences, and system notification settings.</p>
+    </div>
+  </div>
+
+  <!-- Navigation System -->
+  <div class="nav-tabs-wrapper">
+    <div class="nav-tabs">
+      <button class="nav-link" [class.active]="activeTab === 'hotel'" (click)="switchTab('hotel')">
+        <i class="fas fa-hotel"></i>
+        <span>General</span>
+      </button>
+      <button class="nav-link" [class.active]="activeTab === 'security'" (click)="switchTab('security')">
+        <i class="fas fa-shield-halved"></i>
+        <span>Security</span>
+      </button>
+      <button class="nav-link" [class.active]="activeTab === 'sessions'" (click)="switchTab('sessions')">
+        <i class="fas fa-users-gear"></i>
+        <span>Sessions</span>
+      </button>
+      <button class="nav-link" [class.active]="activeTab === 'notifications'" (click)="switchTab('notifications')">
+        <i class="fas fa-bell"></i>
+        <span>Notifications</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Tier -->
+  <div class="tab-content">
+    
+    <!-- Property Profile Tab -->
+    <div *ngIf="activeTab === 'hotel'" class="content-card fade-in">
+      <div class="form-group-title">
+        <i class="fas fa-tune"></i>
+        <span>General Information</span>
+      </div>
+      
+      <form [formGroup]="hotelForm" (ngSubmit)="saveHotelSettings()">
+        <div class="settings-grid-layout">
+          <div class="setting-field-group">
+            <label class="form-label">Hotel Name</label>
+            <input type="text" class="form-control" formControlName="hotelName" placeholder="Enter hotel name" />
+          </div>
+          <div class="setting-field-group">
+            <label class="form-label">Contact Email</label>
+            <input type="email" class="form-control" formControlName="contactEmail" placeholder="admin@hotel.com" />
+          </div>
+          <div class="setting-field-group">
+            <label class="form-label">Currency</label>
+            <select class="form-select" formControlName="currency">
+              <option value="INR">Indian Rupee (₹)</option>
+              <option value="USD">US Dollar ($)</option>
+              <option value="EUR">Euro (€)</option>
+            </select>
+          </div>
+          <div class="setting-field-group">
+            <label class="form-label">Tax Rate (GST %)</label>
+            <input type="number" class="form-control" formControlName="taxRate" />
+          </div>
+          <div class="setting-field-group">
+            <label class="form-label">Check-in Time</label>
+            <input type="time" class="form-control" formControlName="checkInTime" />
+          </div>
+          <div class="setting-field-group">
+            <label class="form-label">Check-out Time</label>
+            <input type="time" class="form-control" formControlName="checkOutTime" />
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <label class="form-label">Cancellation Policy</label>
+          <textarea class="form-control" formControlName="cancellationPolicy" placeholder="Enter cancellation terms..."></textarea>
+        </div>
+
+        <div class="mt-5">
+          <button type="submit" class="btn-primary-custom" [disabled]="hotelForm.invalid || isSaving">
+            <i class="fas fa-save"></i>
+            <span>{{ isSaving ? 'Saving...' : 'Save Settings' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Security Vault Tab -->
+    <div *ngIf="activeTab === 'security'" class="content-card fade-in">
+      <div class="form-group-title">
+        <i class="fas fa-lock"></i>
+        <span>Change Password</span>
+      </div>
+      
+      <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" style="max-width: 550px;">
+        <div class="setting-field-group">
+          <label class="form-label">Current Master Password</label>
+          <input type="password" class="form-control" formControlName="currentPassword" placeholder="••••••••" />
+        </div>
+        <div class="setting-field-group">
+          <label class="form-label">New Secure Cipher</label>
+          <input type="password" class="form-control" formControlName="newPassword" placeholder="••••••••" />
+        </div>
+        <div class="setting-field-group">
+          <label class="form-label">Verify New Cipher</label>
+          <input type="password" class="form-control" formControlName="confirmPassword" placeholder="••••••••" />
+        </div>
+        <button type="submit" class="btn-primary-custom mt-2" [disabled]="passwordForm.invalid || isSaving">
+          <i class="fas fa-shield-check"></i>
+          <span>Update Password</span>
+        </button>
+      </form>
+
+      <div class="mt-5 pt-5 border-top">
+        <div class="form-group-title">
+          <i class="fas fa-history"></i>
+          <span>Login History</span>
+        </div>
+        <div class="history-table-wrapper">
+          <table class="table history-table">
+            <thead>
+              <tr>
+                <th>Date & Time</th>
+                <th>Device/Browser</th>
+                <th>IP Address</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let entry of loginHistory">
+                <td class="fw-bold">{{ formatDate(entry.date) }}</td>
+                <td><i class="fas fa-display me-2 text-muted"></i> {{ entry.device }}</td>
+                <td class="text-muted font-monospace">{{ entry.ip }}</td>
+                <td>
+                  <span class="badge" [ngClass]="entry.status === 'success' ? 'badge-success' : 'badge-danger'">
+                    {{ entry.status | uppercase }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Auth Nodes Tab -->
+    <div *ngIf="activeTab === 'sessions'" class="fade-in">
+      <div class="content-card">
+        <div class="form-group-title">
+          <i class="fas fa-users-gear"></i>
+          <span>Active Sessions</span>
+        </div>
+        <div class="sessions-list">
+          <div class="session-card" *ngFor="let session of sessions">
+            <div class="session-icon">
+              <i class="fas" [ngClass]="session.device.includes('iPhone') ? 'fa-mobile-vibration' : 'fa-laptop-code'"></i>
+            </div>
+            <div class="session-info">
+              <div class="d-flex align-items-center gap-3">
+                <h5 class="mb-0">{{ session.device }}</h5>
+                <span class="session-badge" *ngIf="session.current">Current Session</span>
+              </div>
+              <p class="text-muted small mt-1">
+                <i class="fas fa-location-dot me-1"></i> {{ session.location }}
+                <span class="mx-2">•</span>
+                <i class="fas fa-clock-rotate-left me-1"></i> {{ formatDate(session.lastActive) }}
+              </p>
+            </div>
+            <button class="btn btn-sm btn-outline-danger px-4 py-2 fw-bold" *ngIf="!session.current"
+              (click)="logoutSession(session.id)">
+              Logout Session
+            </button>
+          </div>
+        </div>
+        <div class="mt-5 pt-4 border-top">
+          <button class="btn-danger-outline" (click)="logoutAllSessions()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Logout All Other Sessions</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Relays Tab -->
+    <div *ngIf="activeTab === 'notifications'" class="content-card fade-in">
+      <div class="form-group-title">
+        <i class="fas fa-envelope-circle-check"></i>
+        <span>Operational Communication Relays</span>
+      </div>
+      
+      <form [formGroup]="notificationForm" (ngSubmit)="saveNotifications()">
+        <div class="notification-options">
+          <div class="notification-item">
+            <div class="info">
+              <div class="title">New Bookings</div>
+              <div class="description">Receive email notifications for every new guest booking.</div>
+            </div>
+            <div class="form-check form-switch custom-switch">
+              <input class="form-check-input" type="checkbox" formControlName="emailBookings">
+            </div>
+          </div>
+
+          <div class="notification-item">
+            <div class="info">
+              <div class="title">Cancellations</div>
+              <div class="description">Notify when a booking is cancelled or modified.</div>
+            </div>
+            <div class="form-check form-switch custom-switch">
+              <input class="form-check-input" type="checkbox" formControlName="emailCancellations">
+            </div>
+          </div>
+
+          <div class="notification-item">
+            <div class="info">
+              <div class="title">Weekly Reports</div>
+              <div class="description">Get a weekly summary of hotel performance every Monday.</div>
+            </div>
+            <div class="form-check form-switch custom-switch">
+              <input class="form-check-input" type="checkbox" formControlName="emailWeeklyReport">
+            </div>
+          </div>
+
+          <div class="notification-item">
+            <div class="info">
+              <div class="title">SMS Alerts</div>
+              <div class="description">Send SMS alerts for critical system updates and urgent matters.</div>
+            </div>
+            <div class="form-check form-switch custom-switch">
+              <input class="form-check-input" type="checkbox" formControlName="smsAlerts">
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 pt-4">
+          <button type="submit" class="btn-primary-custom" [disabled]="isSaving">
+            <i class="fas fa-check"></i>
+            <span>Save Preferences</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- Global Notification System -->
+<div class="toast-container">
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-circle-check"></i>
+    <span>{{ successMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="successMessage = ''">
+      <i class="fas fa-xmark text-success"></i>
+    </button>
+  </div>
+  <div class="alert alert-danger" *ngIf="errorMessage">
+    <i class="fas fa-circle-exclamation"></i>
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="errorMessage = ''">
+      <i class="fas fa-xmark text-danger"></i>
+    </button>
+  </div>
+</div>

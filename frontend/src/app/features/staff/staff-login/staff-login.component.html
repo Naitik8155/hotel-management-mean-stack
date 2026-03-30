@@ -1,0 +1,86 @@
+<div class="login-page-container staff-portal">
+  <div class="auth-background">
+    <div class="overlay"></div>
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+  </div>
+
+  <div class="auth-card-wrapper animate-fade-in-up">
+    <div class="auth-card">
+      <!-- Left Branding Panel -->
+      <div class="branding-panel">
+        <div class="branding-content">
+          <div class="logo-area">
+            <i class="fas fa-hotel"></i>
+            <span class="hotel-name">LUXE <span>HAVEN</span></span>
+          </div>
+          <h1>Staff Portal</h1>
+          <p>Excellence in every interaction. Access your professional dashboard to manage guest experiences.</p>
+
+          <ul class="branding-features">
+            <li><i class="fas fa-clipboard-list"></i> Real-time Booking Management</li>
+            <li><i class="fas fa-users-cog"></i> Dynamic Guest Handling</li>
+            <li><i class="fas fa-chart-line"></i> Operations Analytics</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Right Form Panel -->
+      <div class="form-panel">
+        <div class="form-content">
+          <div class="form-header">
+            <h2>Staff Sign In</h2>
+            <p>Authorized access for team members</p>
+          </div>
+
+          <!-- Mode Selection -->
+          <div class="auth-modes">
+            <button type="button" class="mode-btn" routerLink="/auth/login">Guest</button>
+            <button type="button" class="mode-btn active">Staff</button>
+            <button type="button" class="mode-btn admin" routerLink="/admin/login">Admin</button>
+          </div>
+
+          <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth-form">
+            <div class="input-field">
+              <label for="email">Staff Email</label>
+              <div class="input-control">
+                <i class="far fa-id-badge"></i>
+                <input type="email" id="email" formControlName="email" placeholder="staff@luxehaven.com"
+                  [class.invalid]="submitted && f['email'].errors" />
+              </div>
+              <div *ngIf="submitted && f['email'].errors" class="validation-msg">
+                <span *ngIf="f['email'].errors['required']">Email is required</span>
+                <span *ngIf="f['email'].errors['email']">Enter a valid staff email</span>
+              </div>
+            </div>
+
+            <div class="input-field">
+              <label for="password">Security Key</label>
+              <div class="input-control">
+                <i class="far fa-key"></i>
+                <input [type]="showPassword ? 'text' : 'password'" id="password" formControlName="password"
+                  placeholder="••••••••" [class.invalid]="submitted && f['password'].errors" />
+                <button type="button" class="password-toggle" (click)="togglePassword()">
+                  <i [class]="showPassword ? 'far fa-eye-slash' : 'far fa-eye'"></i>
+                </button>
+              </div>
+              <div *ngIf="submitted && f['password'].errors" class="validation-msg">
+                <span *ngIf="f['password'].errors['required']">Password is required</span>
+              </div>
+            </div>
+
+
+            <button type="submit" class="auth-submit-btn" [disabled]="loading">
+              <span *ngIf="!loading">Enter Dashboard <i class="fas fa-sign-in-alt"></i></span>
+              <span *ngIf="loading" class="btn-spinner"></span>
+            </button>
+          </form>
+
+          <footer class="auth-footer">
+            <p><a routerLink="/"><i class="fas fa-arrow-left"></i> Return to Main Website</a></p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

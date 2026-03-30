@@ -1,0 +1,314 @@
+/* Room List Page Styles */
+.hero-section {
+  position: relative;
+  height: 45vh;
+  min-height: 400px;
+  background-image: linear-gradient(rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.6)), url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: white;
+  margin-bottom: -60px;
+}
+
+.hero-content h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: 1rem;
+  color: white;
+}
+
+.hero-content p {
+  font-size: 1.2rem;
+  font-weight: 300;
+  max-width: 600px;
+  margin: 0 auto;
+  opacity: 0.9;
+}
+
+/* Filter Section */
+.filter-section {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 10;
+}
+
+.filter-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filter-header i {
+  color: var(--accent);
+}
+
+.filter-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 0.75rem;
+}
+
+.icon-select {
+  position: relative;
+}
+
+.icon-select i {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent);
+  pointer-events: none;
+}
+
+.icon-select .form-select,
+.icon-select .form-control {
+  padding-left: 2.8rem;
+  height: 48px;
+  border: 1px solid #e2e8f0;
+  border-radius: var(--radius-sm);
+  background-color: #f8fafc;
+  font-family: 'Outfit', sans-serif;
+  transition: all 0.3s ease;
+}
+
+.icon-select .form-select:focus,
+.icon-select .form-control:focus {
+  border-color: var(--accent);
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);
+}
+
+.btn-reset {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid #fee2e2;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transition: all 0.3s ease;
+}
+
+.btn-reset:hover {
+  background: #fee2e2;
+  transform: translateY(-2px);
+}
+
+/* Rooms Grid */
+.rooms-section {
+  padding: 80px 0;
+}
+
+.section-header h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.room-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-card:hover {
+  transform: translateY(-10px);
+  box-shadow: var(--shadow-xl);
+}
+
+.card-img-wrapper {
+  position: relative;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+
+.room-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s ease;
+}
+
+.room-card:hover .room-image {
+  transform: scale(1.1);
+}
+
+.image-placeholder {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  color: #94a3b8;
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+
+.card-content {
+  padding: 2rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.6rem;
+  margin-bottom: 0.75rem;
+  color: var(--primary);
+}
+
+.room-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.room-price::after {
+  content: ' / night';
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.room-features,
+.room-facilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.feature-badge,
+.facility-badge {
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.feature-badge {
+  background: #f1f5f9;
+  color: var(--primary);
+}
+
+.facility-badge {
+  background: rgba(197, 160, 89, 0.1);
+  color: var(--accent);
+}
+
+.room-guests {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.room-rating {
+  margin-bottom: 1.5rem;
+  color: var(--accent);
+}
+
+.room-rating i {
+  font-size: 0.85rem;
+}
+
+.btn-book {
+  background: var(--accent);
+  color: white;
+  flex: 1;
+}
+
+.btn-book:hover {
+  background: var(--accent-light);
+}
+
+.btn-details {
+  background: var(--primary);
+  color: white;
+  flex: 1;
+}
+
+.btn-details:hover {
+  background: var(--primary-light);
+}
+
+/* Info Cards */
+.info-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  height: 100%;
+}
+
+.info-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-lg);
+}
+
+.info-icon {
+  font-size: 2.2rem;
+  color: var(--accent);
+  margin-bottom: 1.5rem;
+}
+
+.info-card h6 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .hero-section {
+    height: 35vh;
+    min-height: 300px;
+    margin-bottom: -40px;
+  }
+
+  .filter-section {
+    padding: 1.5rem;
+  }
+
+  .room-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .room-title {
+    font-size: 1.4rem;
+  }
+}

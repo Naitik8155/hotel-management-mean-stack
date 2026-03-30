@@ -1,0 +1,236 @@
+<div class="bookings-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1>Booking Management</h1>
+      <p class="text-muted">Manage guest bookings, assign rooms, and update booking status</p>
+    </div>
+    <button class="btn btn-primary" (click)="loadBookings()">
+      <i class="fas fa-sync-alt"></i> Refresh
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Status Filter:</label>
+      <select [(ngModel)]="statusFilter" (change)="onStatusFilterChange()" class="form-control">
+        <option value="">All Statuses</option>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="checked-in">Checked-In</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Search:</label>
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+        placeholder="Search by name, booking ID, or room..." class="form-control" />
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading bookings...</p>
+  </div>
+
+  <!-- Bookings Table -->
+  <div *ngIf="!loading" class="table-card">
+    <div *ngIf="filteredBookings.length === 0" class="empty-state">
+      <i class="fas fa-calendar-times"></i>
+      <p>No bookings found</p>
+    </div>
+
+    <div *ngIf="filteredBookings.length > 0" class="table-responsive">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Booking ID</th>
+            <th>Guest Details</th>
+            <th>Room</th>
+            <th>Check-In</th>
+            <th>Check-Out</th>
+            <th>Guests</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let booking of filteredBookings">
+            <td>
+              <strong>{{ booking.bookingNumber || booking._id }}</strong>
+            </td>
+            <td>
+              <strong>{{ booking.user.name || 'N/A' }}</strong><br>
+              <small class="text-muted">{{ booking.user.email }}</small><br>
+              <small class="text-muted">{{ booking.user.phone }}</small>
+            </td>
+            <td>
+              <span class="room-badge" *ngIf="booking.room">
+                Room {{ booking.room.roomNumber }}
+                <span class="room-assigned">(Assigned)</span>
+              </span>
+              <span class="badge badge-warning" *ngIf="!booking.room">
+                Not Assigned
+              </span>
+              <br>
+              <small class="text-muted" *ngIf="booking.room">{{ booking.room.roomType | titlecase }}</small>
+            </td>
+            <td>{{ formatDate(booking.checkInDate) }}</td>
+            <td>{{ formatDate(booking.checkOutDate) }}</td>
+            <td>{{ booking.numberOfGuests || 1 }}</td>
+            <td class="status-column">
+              <span [class]="'badge ' + getStatusBadgeClass(booking.bookingStatus)">
+                {{ booking.bookingStatus | titlecase }}
+              </span>
+            </td>
+            <td class="payment-column">
+              <strong>₹{{ booking.totalAmount | number }}</strong><br>
+              <small [class]="booking.paymentStatus === 'paid' ? 'text-success' : 'text-danger'">
+                {{ booking.paymentStatus | titlecase }}
+              </small>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn btn-sm btn-primary" (click)="openAssignRoomModal(booking)" [disabled]="booking.room"
+                  title="Assign Room">
+                  <i class="fas fa-door-open"></i>
+                </button>
+                <button class="btn btn-sm btn-success" (click)="openUpdateStatusModal(booking)" title="Update Status">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-sm btn-info" (click)="openAddServiceModal(booking)" title="Add Service">
+                  <i class="fas fa-plus"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Room Modal -->
+<div class="modal" *ngIf="showAssignRoomModal" (click)="closeAssignRoomModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Assign Room</h3>
+      <button class="btn-close" (click)="closeAssignRoomModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        <strong>Guest:</strong> {{ selectedBooking?.user?.name }}<br>
+        <strong>Check-In:</strong> {{ formatDate(selectedBooking?.checkInDate || '') }}
+      </p>
+
+      <form [formGroup]="assignRoomForm">
+        <div class="form-group">
+          <label>Select Room:</label>
+          <select formControlName="roomId" class="form-control">
+            <option value="">Choose a room</option>
+            <option *ngFor="let room of getAvailableRooms()" [value]="room._id">
+              Room {{ room.roomNumber }} - {{ room.roomType | titlecase }} (₹{{ room.pricePerNight }}/night)
+            </option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeAssignRoomModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="assignRoom()" [disabled]="assignRoomForm.invalid">
+        Assign Room
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Service Modal -->
+<div class="modal" *ngIf="showAddServiceModal" (click)="closeAddServiceModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Add Extra Service</h3>
+      <button class="btn-close" (click)="closeAddServiceModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        <strong>Guest:</strong> {{ selectedBooking?.user?.name }}<br>
+        <strong>Room:</strong> {{ selectedBooking?.room?.roomNumber || 'Not assigned' }}
+      </p>
+
+      <form [formGroup]="addServiceForm">
+        <div class="form-group">
+          <label>Service Name:</label>
+          <input type="text" formControlName="serviceName" class="form-control"
+            placeholder="e.g., Laundry, Room Service">
+        </div>
+
+        <div class="form-group">
+          <label>Service Price (₹):</label>
+          <input type="number" formControlName="servicePrice" class="form-control" placeholder="0">
+        </div>
+
+        <div class="form-group">
+          <label>Description (Optional):</label>
+          <textarea formControlName="description" class="form-control" rows="3"
+            placeholder="Service details..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeAddServiceModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="addService()" [disabled]="addServiceForm.invalid">
+        Add Service
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal" *ngIf="showUpdateStatusModal" (click)="closeUpdateStatusModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Update Booking Status</h3>
+      <button class="btn-close" (click)="closeUpdateStatusModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>
+        <strong>Guest:</strong> {{ selectedBooking?.user?.name }}<br>
+        <strong>Current Status:</strong>
+        <span [class]="'badge ' + getStatusBadgeClass(selectedBooking?.bookingStatus || '')">
+          {{ selectedBooking?.bookingStatus | titlecase }}
+        </span>
+      </p>
+
+      <form [formGroup]="updateStatusForm">
+        <div class="form-group">
+          <label>New Status:</label>
+          <select formControlName="status" class="form-control">
+            <option value="pending">Pending</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="checked-in">Checked-In</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Notes (Optional):</label>
+          <textarea formControlName="notes" class="form-control" rows="3" placeholder="Add any notes..."></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeUpdateStatusModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="updateStatus()" [disabled]="updateStatusForm.invalid">
+        Update Status
+      </button>
+    </div>
+  </div>
+</div>

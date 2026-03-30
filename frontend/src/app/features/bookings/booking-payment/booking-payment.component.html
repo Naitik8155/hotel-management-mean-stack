@@ -1,0 +1,119 @@
+<div class="payment-container">
+  <div class="container py-5">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center">
+      <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+      <p class="mt-3">Loading booking details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage && !loading" class="alert alert-danger">
+      <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    </div>
+
+    <!-- Payment Section -->
+    <div *ngIf="!loading && booking" class="row">
+      <div class="col-lg-8 mx-auto">
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="fas fa-credit-card"></i> Complete Payment</h4>
+          </div>
+          <div class="card-body">
+            <!-- Booking Summary -->
+            <h5 class="mb-3">Booking Details</h5>
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <p><strong>Booking ID:</strong> {{ booking.bookingNumber || booking._id }}</p>
+                <p><strong>Room:</strong> #{{ booking.roomId?.roomNumber || 'Not Assigned' }} ({{ booking.roomId?.roomType || 'N/A' }})</p>
+                <p><strong>Guest:</strong> {{ booking.guestDetails?.firstName }} {{ booking.guestDetails?.lastName }}</p>
+                <p><strong>Email:</strong> {{ booking.guestDetails?.email }}</p>
+                <p><strong>Phone:</strong> {{ booking.guestDetails?.phone }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Check-in:</strong> {{ booking.checkInDate | date:'mediumDate' }}</p>
+                <p><strong>Check-out:</strong> {{ booking.checkOutDate | date:'mediumDate' }}</p>
+                <p><strong>Guests:</strong> {{ booking.numberOfGuests }}</p>
+                <p *ngIf="booking.specialRequests"><strong>Special Requests:</strong> {{ booking.specialRequests }}</p>
+              </div>
+            </div>
+
+            <hr>
+
+            <!-- Price Breakdown -->
+            <h5 class="mb-3">Payment Summary</h5>
+            <div class="price-details mb-4">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal</span>
+                <span>₹{{ ((booking.totalAmount || 0) / 1.17) | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>GST (12%)</span>
+                <span>₹{{ ((booking.totalAmount || 0) * 0.12 / 1.17) | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3">
+                <span>Service Charge (5%)</span>
+                <span>₹{{ ((booking.totalAmount || 0) * 0.05 / 1.17) | number:'1.2-2' }}</span>
+              </div>
+              <hr>
+              <div class="d-flex justify-content-between">
+                <h5>Total Amount</h5>
+                <h5 class="text-primary">₹{{ (booking.totalAmount || 0) | number:'1.2-2' }}</h5>
+              </div>
+            </div>
+
+            <!-- Payment Options -->
+            <div class="payment-options">
+              <h5 class="mb-3">Choose Payment Method</h5>
+              
+              <div class="payment-method-card mb-3" [class.disabled]="processing">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="mb-1"><i class="fas fa-credit-card text-primary"></i> Pay Online (Razorpay)</h6>
+                    <p class="text-muted mb-0 small">Credit Card, Debit Card, UPI, Net Banking</p>
+                  </div>
+                  <button 
+                    class="btn btn-primary"
+                    (click)="initiatePayment()"
+                    [disabled]="processing"
+                  >
+                    <span *ngIf="!processing">Pay Now</span>
+                    <span *ngIf="processing">
+                      <i class="fas fa-spinner fa-spin"></i> Processing...
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="payment-method-card" [class.disabled]="processing">
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="mb-1"><i class="fas fa-hotel text-success"></i> Pay at Hotel</h6>
+                    <p class="text-muted mb-0 small">Pay cash or card at hotel check-in</p>
+                  </div>
+                  <button 
+                    class="btn btn-outline-success"
+                    (click)="payLater()"
+                    [disabled]="processing"
+                  >
+                    Pay Later
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Security Notice -->
+            <div class="alert alert-info mt-4 mb-0">
+              <i class="fas fa-lock"></i>
+              <small>Your payment is secured with 256-bit SSL encryption</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Back Button -->
+        <button class="btn btn-secondary" (click)="goBack()">
+          <i class="fas fa-arrow-left"></i> Back to Bookings
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,121 @@
+<div class="admin-layout" [class.sidebar-open]="isSidebarOpen">
+  <!-- Overlay for mobile sidebar -->
+  <div class="sidebar-overlay" (click)="toggleSidebar()" *ngIf="isSidebarOpen"></div>
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-brand">
+      <div class="brand-logo">
+        <i class="fas fa-hotel"></i>
+      </div>
+      <div class="brand-text">
+        <span class="brand-title">Grand Luxe Admin</span>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-avatar">
+        <img src="https://ui-avatars.com/api/?name=Admin+User&background=4f46e5&color=fff&bold=true" alt="Admin avatar">
+      </div>
+      <div class="user-info">
+        <div class="user-name">Administrator</div>
+        <div class="user-role">Super Admin</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav custom-scrollbar">
+      <div class="nav-section-title">Overview</div>
+
+      <a routerLink="/admin/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-item" title="Dashboard" (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-th-large"></i></div>
+        <span>Dashboard</span>
+      </a>
+
+      <div class="nav-section-title">Management</div>
+
+      <a routerLink="/admin/rooms" routerLinkActive="active" class="nav-item" title="Rooms"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-bed"></i></div>
+        <span>Rooms</span>
+      </a>
+      <a routerLink="/admin/bookings" routerLinkActive="active" class="nav-item" title="Reservations"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-calendar-alt"></i></div>
+        <span>Reservations</span>
+      </a>
+      <a routerLink="/admin/users" routerLinkActive="active" class="nav-item" title="Guests"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-user-friends"></i></div>
+        <span>Guests</span>
+      </a>
+      <a routerLink="/admin/staff" routerLinkActive="active" class="nav-item" title="Staff"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-id-badge"></i></div>
+        <span>Staff</span>
+      </a>
+      <a routerLink="/admin/payments" routerLinkActive="active" class="nav-item" title="Payments"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-credit-card"></i></div>
+        <span>Payments</span>
+      </a>
+
+
+      <div class="nav-section-title">System</div>
+
+      <a routerLink="/admin/settings" routerLinkActive="active" class="nav-item" title="Settings"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-sliders-h"></i></div>
+        <span>Settings</span>
+      </a>
+      <a routerLink="/admin/profile" routerLinkActive="active" class="nav-item" title="Profile"
+        (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-user-circle"></i></div>
+        <span>Profile</span>
+      </a>
+
+      <div class="nav-divider"></div>
+
+      <a routerLink="/home" class="nav-item logout-link" title="Sign Out" (click)="closeSidebarOnMobile()">
+        <div class="nav-icon"><i class="fas fa-power-off"></i></div>
+        <span>Sign Out</span>
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <main class="admin-main">
+    <!-- Topbar -->
+    <header class="admin-topbar glass-header">
+      <div class="topbar-left">
+        <button class="toggle-sidebar-btn" (click)="toggleSidebar()">
+          <i class="fas fa-bars"></i>
+        </button>
+        <div class="topbar-date d-none d-md-block">
+          <i class="far fa-clock"></i> {{ currentDate | date: 'fullDate' }}
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <button class="topbar-btn bg-hover position-relative">
+          <i class="fas fa-bell"></i>
+          <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+            3
+          </span>
+        </button>
+
+        <a routerLink="/home" class="view-site-btn">
+          <i class="fas fa-external-link-alt"></i>
+          <span class="d-none d-sm-inline">View Site</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <div class="admin-content-inner custom-scrollbar">
+      <div class="content-wrapper fade-in-up">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </main>
+</div>

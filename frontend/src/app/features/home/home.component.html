@@ -1,0 +1,211 @@
+<div class="home-container">
+  <!-- LUXE HERO SECTION (Light Theme) -->
+  <section class="luxe-hero-light" *ngIf="banners.length > 0">
+    <div class="hero-slider">
+      <div *ngFor="let banner of banners; let i = index" class="slide-item"
+        [ngClass]="{ 'is-active': i === currentBannerIndex }">
+
+        <!-- Background Layer -->
+        <div class="slide-image-container">
+          <img [src]="resolveImageUrl(banner.imageUrl || banner.image)" [alt]="banner.title" class="slide-img">
+          <div class="slide-overlay-soft"></div>
+        </div>
+
+        <!-- Content Layer -->
+        <div class="slide-content-container container">
+          <div class="slide-text-box">
+            <h5 class="slide-subtitle">The Collection</h5>
+            <h1 class="slide-title">{{ banner.title }}</h1>
+            <p class="slide-desc">{{ banner.description }}</p>
+
+            <div class="slide-footer">
+              <button class="btn-discover-luxe" (click)="navigateToBanner(banner)">
+                <span>{{ banner.ctaText }}</span>
+                <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Magazine Pagination (Light) -->
+    <div class="hero-pagination-light" *ngIf="banners.length > 1">
+      <div class="pagination-inner">
+        <button class="nav-arrow" (click)="previousBanner()"><i class="fal fa-chevron-left"></i></button>
+        <div class="page-numbers">
+          <span class="current">{{ currentBannerIndex + 1 | number:'2.0-0' }}</span>
+          <span class="sep"></span>
+          <span class="total">{{ banners.length | number:'2.0-0' }}</span>
+        </div>
+        <button class="nav-arrow" (click)="nextBanner()"><i class="fal fa-chevron-right"></i></button>
+      </div>
+    </div>
+
+    <!-- Concierge Booking Bar (White Theme) -->
+    <div class="concierge-bar-wrapper">
+      <div class="container">
+        <div class="concierge-card-white">
+          <h3 class="concierge-title-dark">Check Availability</h3>
+          <form #searchForm (ngSubmit)="search()" class="concierge-grid">
+            <div class="field-item">
+              <label>Arrival</label>
+              <div class="input-with-icon-dark">
+                <i class="fal fa-calendar-alt"></i>
+                <input type="date" [(ngModel)]="searchCriteria.checkInDate" name="checkIn" [min]="today"
+                  (change)="setMinCheckOut()" required>
+              </div>
+            </div>
+
+            <div class="field-item">
+              <label>Departure</label>
+              <div class="input-with-icon-dark">
+                <i class="fal fa-calendar-check"></i>
+                <input type="date" [(ngModel)]="searchCriteria.checkOutDate" name="checkOut" required>
+              </div>
+            </div>
+
+            <div class="field-item">
+              <label>Travelers</label>
+              <div class="input-with-icon-dark">
+                <i class="fal fa-users"></i>
+                <select [(ngModel)]="searchCriteria.guests" name="guests">
+                  <option value="1">1 Adult</option>
+                  <option value="2">2 Adults</option>
+                  <option value="3">3 Adults</option>
+                  <option value="4+">Family (4+)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-item">
+              <label>Experience</label>
+              <div class="input-with-icon-dark">
+                <i class="fal fa-concierge-bell"></i>
+                <select [(ngModel)]="searchCriteria.roomType" name="roomType">
+                  <option value="">Any Room Type</option>
+                  <option value="single">Single Suite</option>
+                  <option value="double">Double Suite</option>
+                  <option value="suite">Luxury Suite</option>
+                  <option value="deluxe">Presidential Suite</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field-submit">
+              <button type="submit" class="btn-check-dark">
+                <span>SEARCH ROOMS</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Rooms -->
+  <section class="featured-rooms-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-subtitle">Premium Selection</span>
+        <h2 class="section-title">Rooms & Suites</h2>
+      </div>
+
+      <div *ngIf="isLoadingRooms" class="text-center py-5">
+        <div class="spinner-border text-gold" role="status" style="color: var(--accent)">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </div>
+
+      <div class="row g-4" *ngIf="!isLoadingRooms && featuredRooms.length > 0">
+        <div class="col-md-6 col-lg-4" *ngFor="let room of featuredRooms.slice(0, 6); let i = index">
+          <div class="room-card-v2" (click)="viewRoomDetails(room._id)" role="button">
+            <div class="room-image-wrapper">
+              <img [src]="resolveImageUrl(room.images?.[0]) || 'assets/room-placeholder.jpg'"
+                [alt]="room.roomNumber || 'Room'">
+              <div class="room-info-overlay">
+                <div class="room-type-tag">{{ room.roomType || 'Standard' }}</div>
+                <h3 class="room-name">Room {{ room.roomNumber || room._id }}</h3>
+                <p class="room-price">Starting from <span>${{ room.pricePerNight || '199' }}</span> / night</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mt-5">
+        <button class="btn-discover" (click)="goToRooms()">
+          <span>EXPLORE ALL ROOMS</span>
+          <i class="fas fa-long-arrow-right ml-2"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Amenities -->
+  <section class="why-choose-us-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-subtitle">Hospitality Defined</span>
+        <h2 class="section-title">Unrivaled Amenities</h2>
+      </div>
+      <div class="row g-5">
+        <div class="col-md-6 col-lg-4" *ngFor="let amenity of amenities">
+          <div class="amenity-card-v2">
+            <div class="amenity-icon-v2">
+              <i class="fa" [ngClass]="'fa-' + amenity.icon"></i>
+            </div>
+            <h5>{{ amenity.name }}</h5>
+            <p>{{ amenity.description }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section class="testimonials-section">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-subtitle">Guest Experience</span>
+        <h2 class="section-title">The Art of Living Well</h2>
+      </div>
+
+      <div class="row g-4" *ngIf="!isLoadingTestimonials && testimonials.length > 0">
+        <div class="col-md-6 col-lg-4" *ngFor="let testimonial of testimonials.slice(0, 3)">
+          <div class="testimonial-card-v2">
+            <div class="quote-icon"><i class="fal fa-quote-left"></i></div>
+            <div class="testimonial-stars">
+              <i class="fas fa-star" *ngFor="let star of getStarArray(testimonial.rating || 5)"></i>
+            </div>
+            <p class="testimonial-comment-v2">"{{ testimonial.comment }}"</p>
+            <div class="testimonial-author-v2">
+              <div class="author-info">
+                <h6>{{ testimonial.guestName }}</h6>
+                <small>Verified Guest</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section-v2"
+    [style.backgroundImage]="'url(https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80)'">
+    <div class="cta-overlay"></div>
+    <div class="container">
+      <div class="cta-content">
+        <h5 class="slide-subtitle text-center mb-4">Your Invitation</h5>
+        <h2>The Art of Escape</h2>
+        <p>Combine luxury and comfort for a stay that feels like nowhere else. Immerse yourself in the tranquility of
+          our premium suites.</p>
+        <button class="btn-discover" (click)="goToRooms()">
+          <span>BOOK NOW</span>
+          <i class="fas fa-calendar-alt ml-2"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+</div>

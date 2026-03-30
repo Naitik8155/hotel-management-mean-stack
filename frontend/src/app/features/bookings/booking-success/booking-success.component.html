@@ -1,0 +1,211 @@
+<div class="booking-success container py-5">
+  <div *ngIf="isLoading" class="text-center">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p>Loading booking confirmation...</p>
+  </div>
+
+  <div *ngIf="!isLoading && errorMessage" class="alert alert-danger" role="alert">
+    <i class="fa fa-exclamation-circle"></i> {{ errorMessage }}
+    <button class="btn btn-primary mt-3" (click)="navigateToHome()">
+      Back to Home
+    </button>
+  </div>
+
+  <div *ngIf="!isLoading && !errorMessage && booking" class="success-container">
+    <!-- Success Header -->
+    <div class="success-header text-center mb-5">
+      <div class="success-icon">
+        <i class="fa fa-check-circle"></i>
+      </div>
+      <h1>Booking Confirmed!</h1>
+      <p class="lead text-muted">Your reservation has been successfully booked</p>
+    </div>
+
+    <!-- Confirmation Details -->
+    <div class="row mb-5">
+      <div class="col-lg-8 mx-auto">
+        <!-- Booking Number & Status -->
+        <div class="card confirmation-card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-1">Booking Number</h6>
+                <h3 class="booking-number">{{ booking.bookingNumber }}</h3>
+              </div>
+              <div class="col-md-6 text-md-end">
+                <h6 class="text-muted mb-1">Booking Status</h6>
+                <span class="badge badge-success">{{ booking.bookingStatus }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Room Details -->
+        <div class="card confirmation-card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Room Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p><strong>Room Type:</strong> {{ booking.roomId?.roomType | titlecase }}</p>
+                <p><strong>Room Number:</strong> {{ booking.roomId?.roomNumber }}</p>
+                <p><strong>Floor:</strong> {{ booking.roomId?.floor }}</p>
+              </div>
+              <div class="col-md-6">
+                <p><strong>Max Guests:</strong> {{ booking.roomId?.maxGuests }}</p>
+                <p><strong>Price/Night:</strong> ₹{{ booking.roomId?.pricePerNight }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stay Details -->
+        <div class="card confirmation-card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Stay Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p>
+                  <strong>Check-in Date:</strong><br>
+                  <span class="highlight-date">{{ formatDate(booking.checkInDate) }}</span>
+                  <br>
+                  <small class="text-muted">From 2:00 PM</small>
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p>
+                  <strong>Check-out Date:</strong><br>
+                  <span class="highlight-date">{{ formatDate(booking.checkOutDate) }}</span>
+                  <br>
+                  <small class="text-muted">Until 11:00 AM</small>
+                </p>
+              </div>
+            </div>
+            <hr>
+            <p class="mb-0">
+              <strong>Total Nights:</strong> {{ booking.numberOfNights }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Guest Details -->
+        <div class="card confirmation-card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Guest Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <p>
+                  <strong>Name:</strong><br>
+                  {{ booking.guestDetails?.firstName }} {{ booking.guestDetails?.lastName }}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p>
+                  <strong>Email:</strong><br>
+                  {{ booking.guestDetails?.email }}
+                </p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                <p>
+                  <strong>Phone:</strong><br>
+                  {{ booking.guestDetails?.phone }}
+                </p>
+              </div>
+              <div class="col-md-6">
+                <p>
+                  <strong>Address:</strong><br>
+                  {{ booking.guestDetails?.address }}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Details -->
+        <div class="card confirmation-card mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Payment Summary</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-3">
+              <div class="col-6">Base Amount ({{ booking.numberOfNights }} nights)</div>
+              <div class="col-6 text-end">₹{{ (booking.roomId?.pricePerNight * booking.numberOfNights) || 0 }}</div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-6">GST (5%)</div>
+              <div class="col-6 text-end">₹{{ ((booking.roomId?.pricePerNight * booking.numberOfNights * 0.05) || 0).toFixed(2) }}</div>
+            </div>
+            <hr>
+            <div class="row">
+              <div class="col-6"><strong>Total Amount</strong></div>
+              <div class="col-6 text-end"><strong class="total-amount">₹{{ booking.totalAmount }}</strong></div>
+            </div>
+            <div class="row mt-3">
+              <div class="col-12">
+                <p class="mb-0">
+                  <strong>Payment Status:</strong>
+                  <span class="badge" [ngClass]="booking.paymentStatus === 'Paid' ? 'badge-success' : 'badge-warning'">
+                    {{ booking.paymentStatus }}
+                  </span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Special Requests -->
+        <div class="card confirmation-card mb-4" *ngIf="booking.specialRequests">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Special Requests</h5>
+          </div>
+          <div class="card-body">
+            <p class="mb-0">{{ booking.specialRequests }}</p>
+          </div>
+        </div>
+
+        <!-- Confirmation Message -->
+        <div class="alert alert-info">
+          <i class="fa fa-envelope"></i>
+          <strong>Confirmation email</strong> has been sent to <strong>{{ booking.guestDetails?.email }}</strong>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions mt-5 text-center">
+          <button 
+            class="btn btn-primary btn-lg me-3" 
+            (click)="downloadInvoice()"
+            [disabled]="isDownloadingInvoice"
+          >
+            <i class="fa" [ngClass]="isDownloadingInvoice ? 'fa-spinner fa-spin' : 'fa-download'"></i> 
+            {{ isDownloadingInvoice ? 'Generating Invoice...' : 'Download Invoice' }}
+          </button>
+          <button class="btn btn-outline-primary btn-lg" (click)="navigateToHome()">
+            <i class="fa fa-home"></i> Back to Home
+          </button>
+        </div>
+
+        <!-- Help Section -->
+        <div class="help-section text-center mt-5 p-4 bg-light rounded">
+          <h5>Need Help?</h5>
+          <p class="text-muted mb-3">
+            Have questions about your booking? Contact our support team
+          </p>
+          <p>
+            <i class="fa fa-phone"></i> +1 234 567 8900<br>
+            <i class="fa fa-envelope"></i> support@hotel.com<br>
+            <i class="fa fa-clock"></i> Available 24/7
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

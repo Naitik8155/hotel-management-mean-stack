@@ -1,0 +1,53 @@
+<div class="staff-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.collapsed]="isSidebarCollapsed">
+    <div class="sidebar-header">
+      <h3 *ngIf="!isSidebarCollapsed">🏨 Staff Panel</h3>
+      <h3 *ngIf="isSidebarCollapsed">🏨</h3>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/staff/dashboard" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-dashboard"></i>
+        <span *ngIf="!isSidebarCollapsed">Dashboard</span>
+      </a>
+      <a routerLink="/staff/bookings" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-calendar-check"></i>
+        <span *ngIf="!isSidebarCollapsed">Bookings</span>
+      </a>
+      <a routerLink="/staff/guests" routerLinkActive="active" class="nav-item">
+        <i class="fas fa-users"></i>
+        <span *ngIf="!isSidebarCollapsed">Guests</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="btn-logout" (click)="logout()">
+        <i class="fas fa-sign-out-alt"></i>
+        <span *ngIf="!isSidebarCollapsed">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Top Header -->
+    <header class="top-header">
+      <button class="btn-toggle" (click)="toggleSidebar()">
+        <i class="fas fa-bars"></i>
+      </button>
+      
+      <div class="header-right">
+        <div class="user-info">
+          <span class="user-name">{{ user?.name || 'Staff' }}</span>
+          <span class="user-role badge bg-info">Staff</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content -->
+    <main class="page-content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>

@@ -1,0 +1,140 @@
+.booking-detail-container {
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.detail-header {
+  background: var(--primary);
+  padding: 6rem 0 8rem;
+  color: white;
+  margin-bottom: -6rem;
+}
+
+.confirmation-badge {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.receipt-card {
+  background: white;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  position: relative;
+}
+
+.receipt-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--accent);
+}
+
+.receipt-body {
+  padding: 4rem;
+}
+
+.receipt-section {
+  margin-bottom: 3rem;
+}
+
+.receipt-section:last-child {
+  margin-bottom: 0;
+}
+
+.receipt-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.receipt-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+}
+
+.receipt-item h6 {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.25rem;
+}
+
+.receipt-item p {
+  color: var(--text-main);
+  opacity: 0.8;
+  margin: 0;
+}
+
+.sidebar-card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 120px;
+}
+
+.room-preview-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.price-summary-v3 {
+  padding: 1.5rem 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.price-row-v3 {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.total-v3 {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 1rem;
+}
+
+.total-v3 h4 {
+  color: var(--primary);
+  font-weight: 800;
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .receipt-body {
+    padding: 2rem;
+  }
+
+  .receipt-grid {
+    grid-template-columns: 1fr;
+  }
+}

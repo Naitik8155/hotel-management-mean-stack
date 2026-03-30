@@ -1,0 +1,173 @@
+<div class="booking-detail-container">
+  <div class="detail-header">
+    <div class="container">
+      <div class="confirmation-badge">
+        <i class="fa fa-check-circle"></i> {{ booking?.bookingStatus | uppercase }}
+      </div>
+      <h1 class="font-playfair text-white display-4">Booking Details</h1>
+      <p class="opacity-75">Booking ID: #{{ booking?.bookingNumber }}</p>
+    </div>
+  </div>
+
+  <div class="container py-5">
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-accent" role="status"></div>
+    </div>
+
+    <div *ngIf="!loading && booking" class="row g-5">
+      <!-- Left: Document Style Receipt -->
+      <div class="col-lg-8">
+        <div class="receipt-card">
+          <div class="receipt-body">
+            <!-- Guest & Timeline -->
+            <div class="receipt-section">
+              <span class="receipt-label">Guest Details</span>
+              <div class="receipt-grid">
+                <div class="receipt-item">
+                  <h6>Guest Name</h6>
+                  <p>{{ booking.guestDetails.firstName }} {{ booking.guestDetails.lastName }}</p>
+                  <small class="text-muted">{{ booking.guestDetails.email }}</small>
+                </div>
+                <div class="receipt-item">
+                  <h6>Number of Guests</h6>
+                  <p>{{ booking.numberOfGuests }} Guests</p>
+                </div>
+                <div class="receipt-item">
+                  <h6>Check-In</h6>
+                  <p>{{ booking.checkInDate | date: 'EEEE, MMM d, y' }}</p>
+                  <small class="text-muted">From 14:00 PM</small>
+                </div>
+                <div class="receipt-item">
+                  <h6>Check-Out</h6>
+                  <p>{{ booking.checkOutDate | date: 'EEEE, MMM d, y' }}</p>
+                  <small class="text-muted">Until 11:00 AM</small>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-5 opacity-5">
+
+            <!-- Accommodations -->
+            <div class="receipt-section">
+              <span class="receipt-label">Room Information</span>
+              <div class="receipt-grid">
+                <div class="receipt-item">
+                  <h6>Room Type</h6>
+                  <p>{{ booking.roomId?.roomType || 'Standard' }}</p>
+                </div>
+                <div class="receipt-item">
+                  <h6>Room Number</h6>
+                  <p>Suite #{{ booking.roomId?.roomNumber }}</p>
+                </div>
+                <div class="receipt-item">
+                  <h6>Floor</h6>
+                  <p>Level {{ booking.roomId?.floor }}</p>
+                </div>
+              </div>
+            </div>
+
+            <hr class="my-5 opacity-5">
+
+            <!-- Special Provisions -->
+            <div class="receipt-section" *ngIf="booking.specialRequests">
+              <span class="receipt-label">Special Requests</span>
+              <div class="p-4 rounded-3" style="background: #f8fafc; border: 1px dashed #e2e8f0;">
+                <p class="mb-0 font-italic">"{{ booking.specialRequests }}"</p>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-5 d-flex justify-content-between align-items-center border-top">
+              <button class="btn btn-link text-muted p-0 text-decoration-none" (click)="navigateToBookings()">
+                <i class="fa fa-arrow-left me-2"></i> Back to My Bookings
+              </button>
+              <span class="text-muted small">Generated on {{ today | date:'medium' }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Actions & Financials -->
+      <div class="col-lg-4">
+        <div class="sidebar-card">
+          <img *ngIf="booking.roomId?.images?.length" [src]="resolveImageUrl(booking.roomId.images[0])"
+            class="room-preview-img" alt="Suite">
+
+          <h5 class="mb-4">Payment Summary</h5>
+
+          <div class="price-summary-v3">
+            <div class="price-row-v3">
+              <span>Room Rate</span>
+              <span>₹{{ booking.roomPrice }}/night</span>
+            </div>
+            <div class="price-row-v3">
+              <span>Duration</span>
+              <span>{{ booking.numberOfNights }} Nights</span>
+            </div>
+            <div class="price-row-v3">
+              <span>Payment Status</span>
+              <span class="badge"
+                [ngClass]="booking.paymentStatus === 'completed' ? 'bg-success-soft text-success' : 'bg-warning-soft text-warning'"
+                style="font-size: 0.65rem;">
+                {{ booking.paymentStatus | uppercase }}
+              </span>
+            </div>
+
+            <div class="total-v3">
+              <div>
+                <h6 class="mb-0">Total Amount</h6>
+                <small class="text-muted">Including taxes</small>
+              </div>
+              <h4>₹{{ booking.totalAmount }}</h4>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-top">
+            <ng-container *ngIf="booking.paymentStatus === 'pending' && booking.bookingStatus === 'pending'">
+              <button class="btn btn-primary w-100 mb-3 py-3" (click)="initiatePayment()">
+                Pay Now
+              </button>
+            </ng-container>
+
+            <button class="btn btn-outline-danger w-100 mb-2 py-2" (click)="showCancelModal = true" *ngIf="canCancel()">
+              Cancel Booking
+            </button>
+
+            <p class="text-center text-muted small mt-3 mb-0">
+              <i class="fa fa-lock me-1"></i> SSL 256-bit Secure Transaction
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Professional Cancel Modal -->
+<div class="modal fade" [ngClass]="{'show d-block': showCancelModal}"
+  style="background: rgba(0,0,0,0.4); backdrop-filter: blur(5px);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 rounded-4 overflow-hidden">
+      <div class="modal-header border-0 p-4 pb-0">
+        <h5 class="font-playfair">Cancel Booking</h5>
+        <button type="button" class="btn-close" (click)="showCancelModal = false"></button>
+      </div>
+      <div class="modal-body p-4">
+        <p class="text-muted small mb-4">Are you sure you want to cancel this reservation? Please provide a reason below.</p>
+        <div class="form-group mb-4">
+          <label class="form-label small fw-bold">REASON FOR CANCELLATION (OPTIONAL)</label>
+          <textarea class="form-control" rows="3" [(ngModel)]="cancelReason"
+            placeholder="Change of plans, health reasons..."></textarea>
+        </div>
+        <div class="alert alert-warning border-0 small">
+          Cancellation may be subject to our refund policy.
+        </div>
+      </div>
+      <div class="modal-footer border-0 p-4 pt-0">
+        <button type="button" class="btn btn-outline-secondary px-4" (click)="showCancelModal = false">Keep Booking</button>
+        <button type="button" class="btn btn-danger px-4" (click)="cancelBooking()" [disabled]="isCancelling">
+          {{ isCancelling ? 'Processing...' : 'Confirm Cancellation' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

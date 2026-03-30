@@ -1,0 +1,233 @@
+<div class="staff-management-container">
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Staff Management</h1>
+      <p class="subtitle">Oversee your hotel team and operations.</p>
+    </div>
+    <button class="btn btn-primary btn-lg px-4 rounded-pill shadow-lg" (click)="openAddForm()">
+      <i class="fas fa-plus me-2"></i> Add Staff Member
+    </button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <h3>{{ getTotalStaff() }}</h3>
+      <p>Total Staff</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ getActiveStaff() }}</h3>
+      <p>Active Staff</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ getTotalSalary() | currency:'INR':'symbol':'1.0-0' }}</h3>
+      <p>Monthly Payroll</p>
+    </div>
+    <div class="stat-card">
+      <h3>{{ roles.length }}</h3>
+      <p>Roles</p>
+    </div>
+  </div>
+
+  <div class="filters-section">
+    <div class="search-bar">
+      <input type="text" class="form-control" placeholder="Search by name or email..." [(ngModel)]="searchTerm"
+        (input)="filterStaff()" />
+      <i class="fas fa-search"></i>
+    </div>
+    <div class="filter-controls">
+      <select class="form-select" [(ngModel)]="selectedRole" (change)="filterStaff()">
+        <option value="">Departmental Filter</option>
+        <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+      </select>
+      <button class="btn btn-light rounded-pill px-4 shadow-sm" (click)="resetFilters()">
+        <i class="fas fa-sync-alt me-2"></i> Reset
+      </button>
+    </div>
+  </div>
+
+  <div class="staff-table-section shadow-lg border-0">
+    <div class="table-responsive">
+      <table class="table table-hover staff-table mb-0" *ngIf="filteredStaff.length > 0">
+        <thead>
+          <tr>
+            <th class="ps-4">Name</th>
+            <th>Contact</th>
+            <th>Role</th>
+            <th>Shift</th>
+            <th>Salary</th>
+            <th>Joining Date</th>
+            <th class="text-end pe-4">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of filteredStaff; let i = index">
+            <td class="ps-4">
+              <div class="d-flex align-items-center">
+                <div
+                  class="avatar-sm me-3 bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center"
+                  style="width: 40px; height: 40px; font-weight: 700;">
+                  {{ member.name.charAt(0) }}
+                </div>
+                <div>
+                  <div class="fw-bold">{{ member.name }}</div>
+                  <small class="text-muted">ID: {{ member._id.substring(18) | uppercase }}</small>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div>{{ member.email }}</div>
+              <small class="text-muted">{{ member.phone }}</small>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getRoleBadgeClass(member.role)">
+                {{ member.role | titlecase }}
+              </span>
+            </td>
+            <td>
+              <span class="badge bg-light text-dark shadow-sm border">
+                <i class="far fa-clock me-1"></i> {{ member.shift | titlecase }}
+              </span>
+            </td>
+            <td>
+              <div class="fw-bold text-dark">{{ member.salary | currency:'INR':'symbol':'1.0-0' }}</div>
+            </td>
+            <td>{{ formatDate(member.joiningDate) }}</td>
+            <td class="text-end pe-4">
+              <div class="action-buttons justify-content-end">
+                <button class="btn btn-warning shadow-sm" (click)="editStaff(member)" title="Edit Profile">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn btn-danger shadow-sm" (click)="deleteStaff(member)" title="Remove Member">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="empty-state text-center py-5" *ngIf="filteredStaff.length === 0">
+      <div class="mb-4">
+        <i class="fas fa-users-cog fa-4x text-light"></i>
+      </div>
+      <h3 class="fw-bold text-dark">No staff members found</h3>
+      <p class="text-muted">{{ searchTerm ? 'No staff members match your search.' : 'Start by adding a new staff member.' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrop -->
+<div class="modal-backdrop fade" [class.show]="showForm || showDeleteConfirm" *ngIf="showForm || showDeleteConfirm">
+</div>
+
+<!-- Unified Staff Form Modal -->
+<div class="modal fade" [class.show]="showForm" [style.display]="showForm ? 'block' : 'none'" *ngIf="showForm">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content shadow-2xl">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold">
+          <i class="fas fa-id-card-alt text-primary me-2"></i>
+          {{ editMode ? 'Edit Staff Member' : 'Add Staff Member' }}
+        </h5>
+        <button type="button" class="btn-close shadow-none" (click)="closeForm()"></button>
+      </div>
+      <form [formGroup]="staffForm" (ngSubmit)="saveStaff()">
+        <div class="modal-body pt-4">
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label">Full Name</label>
+              <input type="text" class="form-control" formControlName="name" placeholder="John Doe"
+                [class.is-invalid]="staffForm.get('name')?.invalid && staffForm.get('name')?.touched" />
+              <div class="invalid-feedback">Name is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email Address</label>
+              <input type="email" class="form-control" formControlName="email" placeholder="admin@hotel.com"
+                [class.is-invalid]="staffForm.get('email')?.invalid && staffForm.get('email')?.touched" />
+              <div class="invalid-feedback">A valid email address is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone Number</label>
+              <input type="text" class="form-control" formControlName="phone" placeholder="Enter phone number"
+                [class.is-invalid]="staffForm.get('phone')?.invalid && staffForm.get('phone')?.touched" />
+              <div class="invalid-feedback">A valid phone number is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Role</label>
+              <select class="form-select" formControlName="role"
+                [class.is-invalid]="staffForm.get('role')?.invalid && staffForm.get('role')?.touched">
+                <option value="">Select role</option>
+                <option *ngFor="let role of roles" [value]="role.value">{{ role.label }}</option>
+              </select>
+              <div class="invalid-feedback">Role is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Salary (₹)</label>
+              <input type="number" class="form-control" formControlName="salary" placeholder="0"
+                [class.is-invalid]="staffForm.get('salary')?.invalid && staffForm.get('salary')?.touched" />
+              <div class="invalid-feedback">Salary is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Shift</label>
+              <select class="form-select" formControlName="shift"
+                [class.is-invalid]="staffForm.get('shift')?.invalid && staffForm.get('shift')?.touched">
+                <option value="">Select shift</option>
+                <option value="morning">Morning</option>
+                <option value="afternoon">Afternoon</option>
+                <option value="night">Night</option>
+              </select>
+              <div class="invalid-feedback">Shift is required.</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Joining Date</label>
+              <input type="date" class="form-control" formControlName="joiningDate"
+                [class.is-invalid]="staffForm.get('joiningDate')?.invalid && staffForm.get('joiningDate')?.touched" />
+              <div class="invalid-feedback">Joining date is required.</div>
+            </div>
+            <div class="col-md-6" *ngIf="!editMode">
+              <label class="form-label">Temporary Access Secret</label>
+              <input type="password" class="form-control" formControlName="password" placeholder="Staff@123" />
+              <small class="text-muted">Leave blank for default system password.</small>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0 pb-4 pe-4">
+          <button type="button" class="btn btn-light px-4 rounded-pill fw-bold" (click)="closeForm()">Cancel</button>
+          <button type="submit" class="btn btn-primary px-5 rounded-pill shadow-lg fw-bold"
+            [disabled]="staffForm.invalid || isSaving">
+            <span *ngIf="!isSaving">
+              <i class="fas" [ngClass]="editMode ? 'fa-save' : 'fa-check'"></i>
+              {{ editMode ? 'Save Changes' : 'Add Member' }}
+            </span>
+            <span *ngIf="isSaving"><i class="fas fa-circle-notch fa-spin me-2"></i> Processing...</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Termination Confirmation Modal -->
+<div class="modal fade" [class.show]="showDeleteConfirm" [style.display]="showDeleteConfirm ? 'block' : 'none'"
+  *ngIf="showDeleteConfirm">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+      <div class="modal-body text-center p-5">
+        <div class="mb-4 text-danger">
+          <i class="fas fa-exclamation-circle fa-4x"></i>
+        </div>
+        <h4 class="fw-bold">Remove Staff Member?</h4>
+        <p class="text-muted">Are you sure you want to remove <strong>{{ selectedStaff?.name }}</strong> from the staff directory?</p>
+
+        <div class="d-flex gap-3 justify-content-center mt-4">
+          <button type="button" class="btn btn-light px-4 rounded-pill fw-bold" (click)="closeDeleteConfirm()">Abort
+            Action</button>
+          <button type="button" class="btn btn-danger px-4 rounded-pill shadow-lg fw-bold" (click)="confirmDelete()">
+            Delete Member
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

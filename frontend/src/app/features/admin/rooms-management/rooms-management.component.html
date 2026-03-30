@@ -1,0 +1,380 @@
+<div class="rooms-management-container">
+  <!-- Header Section -->
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Rooms Management</h1>
+      <p class="subtitle">Manage hotel rooms, inventory, pricing, and availability.</p>
+    </div>
+    <button class="btn btn-primary btn-lg" (click)="openAddForm()">
+      <i class="fas fa-plus"></i> Add New Room
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading" style="text-align: center; padding: 100px 0;">
+    <div class="spinner-border" role="status" style="width: 3rem; height: 3rem; color: #4a90e2;">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <p style="margin-top: 20px; font-size: 1.2rem; color: #666;">Loading rooms...</p>
+  </div>
+
+
+  <!-- Main Content (only show if not loading) -->
+  <div *ngIf="!isLoading">
+    <!-- Search & Filter Bar -->
+    <div class="filters-section">
+      <div class="search-bar">
+        <input type="text" class="form-control" placeholder="Search by room number..." [(ngModel)]="searchTerm"
+          (input)="filterRooms()" />
+        <i class="fas fa-search"></i>
+      </div>
+
+      <div class="filter-controls">
+        <select class="form-select" [(ngModel)]="selectedType" (change)="filterRooms()">
+          <option value="">All Room Types</option>
+          <option value="single">Single Room</option>
+          <option value="double">Double Room</option>
+          <option value="suite">Suite</option>
+          <option value="deluxe">Deluxe Suite</option>
+        </select>
+
+        <select class="form-select" [(ngModel)]="availabilityFilter" (change)="filterRooms()">
+          <option value="">All Availability</option>
+          <option value="true">Available</option>
+          <option value="false">Unavailable</option>
+        </select>
+
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-outline-secondary" (click)="resetFilters()">
+            <i class="fas fa-redo"></i> Reset
+          </button>
+
+          <!-- Bulk actions -->
+          <div class="selection-toolbar">
+            <button class="btn btn-sm btn-success" [disabled]="selectedRooms.length === 0 || isSaving"
+              (click)="markSelectedFeatured(true)">
+              <i class="fas fa-star me-1"></i> Featured
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" [disabled]="selectedRooms.length === 0 || isSaving"
+              (click)="markSelectedFeatured(false)">
+              Remove Featured
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <h3>{{ filteredRooms.length }}</h3>
+        <p>Total Rooms</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ getAvailableCount() }}</h3>
+        <p>Available</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ getOccupiedCount() }}</h3>
+        <p>Occupied</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ getAveragePrice() | currency }}</h3>
+        <p>Avg. Price</p>
+      </div>
+    </div>
+
+    <!-- Rooms Grid -->
+    <div class="rooms-grid-section">
+      <!-- select‑all header for cards -->
+      <div class="grid-header">
+        <input type="checkbox" (change)="toggleSelectAll($event)"
+          [checked]="selectedRooms.length === filteredRooms.length && filteredRooms.length > 0"
+          [attr.aria-label]="'Select all rooms'" />
+      </div>
+
+      <div class="rooms-grid" *ngIf="filteredRooms.length > 0">
+        <div *ngFor="let room of filteredRooms" class="room-card" [class.selected-row]="isSelected(room)">
+          <div class="card-checkbox">
+            <input type="checkbox" [checked]="isSelected(room)"
+              (click)="$event.stopPropagation(); toggleSelectRoom(room)"
+              [attr.aria-label]="'Select room ' + (room.roomNumber || room._id)" />
+          </div>
+          <div class="card-image">
+            <img [src]="getRoomThumbnail(room)" alt="Room {{room.roomNumber}}" />
+            <span *ngIf="room.isFeatured" class="featured-star">
+              <i class="fas fa-star"></i>
+            </span>
+          </div>
+          <div class="card-body">
+            <h4 class="room-number">{{ room.roomNumber }}</h4>
+            <span class="badge badge-{{getRoomTypeBadge(room.roomType)}}">{{ room.roomType | titlecase }}</span>
+            <p class="price">₹{{ room.pricePerNight }} / night</p>
+            <p class="room-info">
+              <i class="fas fa-layer-group"></i> Floor {{room.floor}} &middot;
+              <i class="fas fa-users"></i> {{room.maxGuests}} guests
+            </p>
+            <p class="amenity-count">
+              <i class="fas fa-concierge-bell"></i>
+              {{ room.amenities?.length || 0 }} amenity{{ room.amenities?.length === 1 ? '' : 'ies' }}
+            </p>
+            <p class="availability" [class.available]="room.isAvailable">
+              {{ room.isAvailable ? 'Available' : 'Unavailable' }}
+            </p>
+          </div>
+          <div class="card-actions">
+            <button class="btn btn-sm btn-warning" (click)="editRoom(room)" title="Edit">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn btn-sm btn-danger" (click)="deleteRoom(room)" title="Delete">
+              <i class="fas fa-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-secondary" (click)="toggleAvailability(room)" title="Toggle availability">
+              <i [ngClass]="
+                room.isAvailable ? 'fas fa-toggle-on' : 'fas fa-toggle-off'
+              "></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="filteredRooms.length === 0">
+        <i class="fas fa-inbox"></i>
+        <h3>No Rooms Found</h3>
+        <p>
+          {{
+          searchTerm || selectedType
+          ? "Try adjusting your search or filters."
+          : "Start by adding your first room."
+          }}
+        </p>
+        <button class="btn btn-primary" (click)="openAddForm()">
+          <i class="fas fa-plus"></i> Add First Room
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Room Modal -->
+<div class="modal" [style.display]="showForm ? 'block' : 'none'" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i [ngClass]="isEditMode ? 'fas fa-edit' : 'fas fa-plus'"></i>
+          {{ isEditMode ? "Edit Room" : "Add New Room" }}
+        </h5>
+        <button type="button" class="btn-close" (click)="closeForm()"></button>
+      </div>
+
+      <form [formGroup]="roomForm" (ngSubmit)="saveRoom()">
+        <div class="modal-body">
+          <!-- Room Number & Type -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="roomNumber" class="form-label">Room Number *</label>
+              <input type="text" class="form-control" id="roomNumber" formControlName="roomNumber"
+                placeholder="e.g., 101"
+                [class.is-invalid]="roomForm.get('roomNumber')?.invalid && roomForm.get('roomNumber')?.touched" />
+              <div class="invalid-feedback" *ngIf="roomForm.get('roomNumber')?.invalid">
+                Room number is required (min 2 characters)
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="roomType" class="form-label">Room Type *</label>
+              <select class="form-select" id="roomType" formControlName="roomType"
+                [class.is-invalid]="roomForm.get('roomType')?.invalid && roomForm.get('roomType')?.touched">
+                <option value="">Select room type</option>
+                <option value="single">Single Room</option>
+                <option value="double">Double Room</option>
+                <option value="suite">Suite</option>
+                <option value="deluxe">Deluxe Suite</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="roomForm.get('roomType')?.invalid">
+                Room type is required
+              </div>
+            </div>
+          </div>
+
+          <!-- Price & Capacity -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="pricePerNight" class="form-label">Price Per Night *</label>
+              <div class="input-group">
+                <span class="input-group-text">₹</span>
+                <input type="number" class="form-control" id="pricePerNight" formControlName="pricePerNight"
+                  placeholder="0" min="100" [class.is-invalid]="
+                    roomForm.get('pricePerNight')?.invalid && roomForm.get('pricePerNight')?.touched
+                  " />
+              </div>
+              <div class="invalid-feedback" *ngIf="roomForm.get('pricePerNight')?.invalid">
+                Price must be at least ₹100
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="maxGuests" class="form-label">Max Guests *</label>
+              <input type="number" class="form-control" id="maxGuests" formControlName="maxGuests" placeholder="0"
+                min="1" [class.is-invalid]="roomForm.get('maxGuests')?.invalid && roomForm.get('maxGuests')?.touched" />
+              <div class="invalid-feedback" *ngIf="roomForm.get('maxGuests')?.invalid">
+                Max guests must be at least 1
+              </div>
+            </div>
+          </div>
+
+          <!-- Floor -->
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="floor" class="form-label">Floor *</label>
+              <input type="number" class="form-control" id="floor" formControlName="floor" placeholder="0"
+                [class.is-invalid]="roomForm.get('floor')?.invalid && roomForm.get('floor')?.touched" />
+              <div class="invalid-feedback" *ngIf="roomForm.get('floor')?.invalid">
+                Floor number is required
+              </div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="isAvailable" class="form-label">Availability</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isAvailable" formControlName="isAvailable" />
+                <label class="form-check-label" for="isAvailable">
+                  Mark as Available
+                </label>
+              </div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="isFeatured" class="form-label">Featured on Home</label>
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="isFeatured" formControlName="isFeatured" />
+                <label class="form-check-label" for="isFeatured">
+                  Show this room in the Home → Featured Rooms section
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Amenities -->
+          <div class="mb-3">
+            <label class="form-label">Amenities</label>
+            <div class="amenities-grid">
+              <div class="form-check" *ngFor="let amenity of availableAmenities">
+                <input class="form-check-input" type="checkbox" [id]="'amenity-' + amenity"
+                  [checked]="isAmenitySelected(amenity)" (change)="toggleAmenity(amenity)" />
+                <label class="form-check-label" [for]="'amenity-' + amenity">
+                  <i [ngClass]="getAmenityIcon(amenity)"></i>
+                  {{ amenity | titlecase }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Room Images -->
+          <div class="mb-3">
+            <label class="form-label">Room Images</label>
+            <div class="image-upload-section">
+              <input type="file" #fileInput class="form-control" id="roomImages" accept="image/*" multiple
+                (change)="onFileSelect($event)" />
+              <small class="text-muted">Select multiple images (JPG, PNG, WEBP)</small>
+            </div>
+
+            <!-- Image Previews -->
+            <div class="image-previews mt-3" *ngIf="imagePreviewUrls.length > 0">
+              <div class="row g-2">
+                <div class="col-md-3" *ngFor="let preview of imagePreviewUrls; let i = index">
+                  <div class="preview-container">
+                    <img [src]="preview" alt="Room preview" class="preview-image">
+                    <button type="button" class="btn btn-danger btn-sm remove-btn" (click)="removeImage(i)"
+                      title="Remove image">
+                      <i class="fas fa-times"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" formControlName="description"
+              placeholder="Add room description..." rows="3"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeForm()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="roomForm.invalid || isSaving">
+            <span *ngIf="!isSaving">
+              <i [ngClass]="isEditMode ? 'fas fa-save' : 'fas fa-plus'"></i>
+              {{ isEditMode ? "Update Room" : "Add Room" }}
+            </span>
+            <span *ngIf="isSaving">
+              <i class="fas fa-spinner fa-spin"></i> Saving...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" [style.display]="showDeleteConfirm ? 'block' : 'none'" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header border-danger">
+        <h5 class="modal-title">
+          <i class="fas fa-exclamation-triangle text-danger"></i> Delete Room
+        </h5>
+        <button type="button" class="btn-close" (click)="closeDeleteConfirm()"></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete room <strong>{{ roomToDelete?.roomNumber }}</strong>?</p>
+        <p class="text-muted">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeDeleteConfirm()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()" [disabled]="isDeleting">
+          <span *ngIf="!isDeleting">
+            <i class="fas fa-trash"></i> Delete Room
+          </span>
+          <span *ngIf="isDeleting">
+            <i class="fas fa-spinner fa-spin"></i> Deleting...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Amenities View Modal -->
+<div class="modal" [style.display]="showAmenitiesView ? 'block' : 'none'" style="background: rgba(0,0,0,0.5);">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Room {{ selectedRoomForView?.roomNumber }} Amenities</h5>
+        <button type="button" class="btn-close" (click)="closeAmenitiesView()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="amenities-list" *ngIf="selectedRoomForView?.amenities && selectedRoomForView?.amenities.length > 0">
+          <div class="amenity-item" *ngFor="let amenity of selectedRoomForView?.amenities">
+            <i [ngClass]="getAmenityIcon(amenity)"></i>
+            <span>{{ amenity | titlecase }}</span>
+          </div>
+        </div>
+        <p class="text-muted" *ngIf="!selectedRoomForView?.amenities || selectedRoomForView?.amenities.length === 0">
+          No amenities assigned
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeAmenitiesView()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

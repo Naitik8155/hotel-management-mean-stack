@@ -1,0 +1,185 @@
+<div class="booking-create-container">
+  <!-- Top Banner -->
+  <div class="booking-header-banner">
+    <div class="container">
+      <span class="text-accent fw-bold text-uppercase letter-spacing-1">Secure Booking</span>
+      <h1 style="color: white;">Complete Your Reservation</h1>
+
+      <div class="step-indicator">
+        <div class="step-item active">
+          <span class="step-number">1</span>
+          <span>Details</span>
+        </div>
+        <div class="step-item">
+          <span class="step-number">2</span>
+          <span>Payment</span>
+        </div>
+        <div class="step-item">
+          <span class="step-number">3</span>
+          <span>Summary</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container py-5">
+    <!-- Loading State -->
+    <div *ngIf="loading" class="text-center py-5">
+      <div class="spinner-border text-accent" style="width: 3rem; height: 3rem;"></div>
+      <p class="mt-3 text-muted">Loading booking details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div *ngIf="errorMessage && !loading" class="alert alert-danger shadow-sm border-0 rounded-4">
+      <i class="fas fa-exclamation-circle me-2"></i> {{ errorMessage }}
+    </div>
+
+    <!-- Main Content Grid -->
+    <div *ngIf="!loading && room" class="row g-5">
+      <!-- Left: Form -->
+      <div class="col-lg-8">
+        <div class="booking-form-card">
+          <form [formGroup]="bookingForm" (ngSubmit)="createBooking()">
+            <span class="section-label">Stay Dates</span>
+            <div class="row g-4 mb-5">
+              <div class="col-md-6">
+                <label for="checkInDate" class="form-label">Arrival Date</label>
+                <input type="date" id="checkInDate" class="form-control form-control-lg" formControlName="checkInDate"
+                  [min]="minCheckIn" (change)="onCheckInChange()"
+                  [class.is-invalid]="bookingForm.get('checkInDate')?.invalid && bookingForm.get('checkInDate')?.touched" />
+                <div class="invalid-feedback">A valid check-in date is required</div>
+              </div>
+              <div class="col-md-6">
+                <label for="checkOutDate" class="form-label">Departure Date</label>
+                <input type="date" id="checkOutDate" class="form-control form-control-lg" formControlName="checkOutDate"
+                  [min]="minCheckOut" (change)="calculateTotal()"
+                  [class.is-invalid]="bookingForm.get('checkOutDate')?.invalid && bookingForm.get('checkOutDate')?.touched" />
+                <div class="invalid-feedback">A valid check-out date is required</div>
+              </div>
+              <div class="col-md-6">
+                <label for="numberOfGuests" class="form-label">Number of Guests</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent border-end-0"><i
+                      class="fa fa-users text-muted small"></i></span>
+                  <input type="number" id="numberOfGuests" class="form-control form-control-lg border-start-0"
+                    formControlName="numberOfGuests" min="1" [max]="room.maxGuests"
+                    [class.is-invalid]="bookingForm.get('numberOfGuests')?.invalid && bookingForm.get('numberOfGuests')?.touched" />
+                </div>
+                <small class="text-muted d-block mt-2">Maximum capacity: {{ room.maxGuests }} guests</small>
+              </div>
+            </div>
+
+            <span class="section-label">Guest Information</span>
+            <div class="row g-4 mb-5">
+              <div class="col-md-12">
+                <label for="guestName" class="form-label">Full Name</label>
+                <input type="text" id="guestName" class="form-control form-control-lg" formControlName="guestName"
+                  placeholder="e.g. John Doe"
+                  [class.is-invalid]="bookingForm.get('guestName')?.invalid && bookingForm.get('guestName')?.touched" />
+              </div>
+              <div class="col-md-6">
+                <label for="guestEmail" class="form-label">Email Address</label>
+                <input type="email" id="guestEmail" class="form-control form-control-lg" formControlName="guestEmail"
+                  placeholder="john@example.com"
+                  [class.is-invalid]="bookingForm.get('guestEmail')?.invalid && bookingForm.get('guestEmail')?.touched" />
+              </div>
+              <div class="col-md-6">
+                <label for="guestPhone" class="form-label">Phone Number</label>
+                <input type="tel" id="guestPhone" class="form-control form-control-lg" formControlName="guestPhone"
+                  placeholder="+1 (555) 000-0000"
+                  [class.is-invalid]="bookingForm.get('guestPhone')?.invalid && bookingForm.get('guestPhone')?.touched" />
+              </div>
+            </div>
+
+            <span class="section-label">Additional Requests</span>
+            <div class="mb-5">
+              <textarea id="specialRequests" class="form-control form-control-lg" formControlName="specialRequests"
+                rows="4"
+                placeholder="Special requests, dietary restrictions, arrival time, etc."></textarea>
+            </div>
+
+            <div class="alert alert-light border-0 rounded-4 p-4 mb-5" style="background: #f8fafc;">
+              <h6 class="fw-bold mb-2"><i class="fa fa-info-circle me-2 text-primary"></i> Cancellation Policy</h6>
+              <p class="small text-muted mb-0">Complimentary cancellation up to 48 hours prior to arrival. Late
+                cancellations are subject to a one-night room charge plus applicable taxes.</p>
+            </div>
+
+            <div class="d-flex gap-3">
+              <button type="button" class="btn btn-outline-secondary px-4" (click)="goBack()">
+                <i class="fas fa-arrow-left me-2"></i> Back to Room Details
+              </button>
+              <button type="submit" class="btn btn-proceed" [disabled]="submitting || bookingForm.invalid">
+                <span *ngIf="!submitting">Continue to Payment <i class="fa fa-arrow-right ms-2"></i></span>
+                <span *ngIf="submitting"><i class="fas fa-spinner fa-spin"></i> Processing...</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Right: Summary -->
+      <div class="col-lg-4">
+        <div class="summary-card-v2">
+          <img *ngIf="room.images && room.images.length > 0" [src]="resolveImageUrl(room.images[0])" alt="Suite"
+            class="summary-img" />
+          <div class="summary-content">
+            <span class="text-accent small fw-bold text-uppercase mb-2 d-block">{{ room.roomType }} COLLECTION</span>
+            <h4 class="mb-4">Suite #{{ room.roomNumber }}</h4>
+
+            <div class="d-flex justify-content-between mb-4 pb-4 border-bottom">
+              <div class="text-center px-2">
+                <small class="text-muted d-block text-uppercase"
+                  style="font-size: 0.6rem; letter-spacing: 1px;">Arrival</small>
+                <p class="fw-bold mb-0">{{ bookingForm.get('checkInDate')?.value ?
+                  (bookingForm.get('checkInDate')?.value | date:'MMM d') : '---' }}</p>
+              </div>
+              <div class="text-center px-4 border-start border-end">
+                <small class="text-muted d-block text-uppercase"
+                  style="font-size: 0.6rem; letter-spacing: 1px;">Nights</small>
+                <p class="fw-bold mb-0">{{ totalNights || '---' }}</p>
+              </div>
+              <div class="text-center px-2">
+                <small class="text-muted d-block text-uppercase"
+                  style="font-size: 0.6rem; letter-spacing: 1px;">Departure</small>
+                <p class="fw-bold mb-0">{{ bookingForm.get('checkOutDate')?.value ?
+                  (bookingForm.get('checkOutDate')?.value| date:'MMM d') : '---' }}</p>
+              </div>
+            </div>
+
+            <div class="price-breakdown">
+              <div class="price-row">
+                <span>Price per Night</span>
+                <span>₹{{ room.pricePerNight | number }}</span>
+              </div>
+              <div class="price-row" *ngIf="totalNights > 0">
+                <span>Subtotal</span>
+                <span>₹{{ subtotal | number:'1.2-2' }}</span>
+              </div>
+              <div class="price-row">
+                <span>Taxes (12%)</span>
+                <span>₹{{ taxAmount | number:'1.2-2' }}</span>
+              </div>
+              <div class="price-row">
+                <span>Service Fee (5%)</span>
+                <span>₹{{ serviceCharge | number:'1.2-2' }}</span>
+              </div>
+
+              <div class="total-row">
+                <div>
+                  <h5 class="mb-0">Total Amount</h5>
+                  <small class="text-muted">Inclusive of all taxes</small>
+                </div>
+                <h3>₹{{ totalAmount | number:'1.2-2' }}</h3>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 rounded-3"
+              style="background: rgba(16, 185, 129, 0.05); border: 1px dashed rgba(16, 185, 129, 0.2);">
+              <small class="text-success fw-600"><i class="fa fa-shield-alt me-1"></i> Best price guarantee.</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

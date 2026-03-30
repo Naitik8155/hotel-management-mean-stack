@@ -1,0 +1,276 @@
+<div class="payment-management-container">
+  <!-- Header Section -->
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Payments</h1>
+      <p class="subtitle">Manage transactions, track revenue, and process refunds.</p>
+    </div>
+    <button class="btn-refresh" (click)="loadPayments()">
+      <i class="fas fa-sync-alt"></i>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <p>Gross Revenue</p>
+      <h3>{{ getTotalRevenue() | currency:'INR':'symbol':'1.0-0' }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Pending Settlements</p>
+      <h3>{{ getPendingAmount() | currency:'INR':'symbol':'1.0-0' }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Failed Payments</p>
+      <h3 class="text-danger">{{ getFailedPayments() }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Refunded Amount</p>
+      <h3>{{ getRefundedAmount() | currency:'INR':'symbol':'1.0-0' }}</h3>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by transaction ID or booking reference..." [(ngModel)]="searchTerm"
+        (input)="filterPayments()" />
+    </div>
+
+    <div class="filter-controls">
+      <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterPayments()">
+        <option value="">Status</option>
+        <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+      </select>
+
+      <select class="form-select" [(ngModel)]="selectedMethod" (change)="filterPayments()">
+        <option value="">Method</option>
+        <option *ngFor="let method of methods" [value]="method">{{ method | titlecase }}</option>
+      </select>
+
+      <input type="date" class="form-control" [(ngModel)]="dateFrom" (change)="filterPayments()" />
+      <input type="date" class="form-control" [(ngModel)]="dateTo" (change)="filterPayments()" />
+
+      <button class="btn-reset" (click)="resetFilters()">
+        <i class="fas fa-undo"></i>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Payments Table -->
+  <div class="payments-table-section">
+    <div class="table-responsive">
+      <table class="table payments-table" *ngIf="filteredPayments.length > 0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Transaction ID</th>
+            <th>Booking</th>
+            <th>Amount</th>
+            <th>Method</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let payment of filteredPayments; let i = index" (click)="viewDetails(payment)">
+            <td><span class="text-muted">{{ i + 1 }}</span></td>
+            <td>
+              <span class="transaction-id">{{ payment.razorpayPaymentId || payment.transactionDetails?.transactionId ||
+                '—' }}</span>
+            </td>
+            <td>
+              <span class="font-weight-600 text-primary">{{ payment.bookingId?.bookingNumber || 'N/A' }}</span>
+            </td>
+            <td>
+              <span class="amount">{{ payment.amount | currency:'INR':'symbol':'1.0-0' }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <i [ngClass]="getMethodIcon(payment.paymentMethod)" class="text-muted"></i>
+                <span>{{ payment.paymentMethod | titlecase }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="getStatusBadgeClass(payment.status)">
+                <i class="fas" [ngClass]="{
+                  'fa-check-circle': payment.status === 'completed',
+                  'fa-clock': payment.status === 'pending',
+                  'fa-times-circle': payment.status === 'failed',
+                  'fa-history': payment.status === 'refunded'
+                }"></i>
+                {{ payment.status | titlecase }}
+              </span>
+            </td>
+            <td><span class="text-muted">{{ formatDate(payment.createdAt) }}</span></td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action btn-view" (click)="$event.stopPropagation(); viewDetails(payment)"
+                  title="View Details">
+                  <i class="fas fa-file-invoice"></i>
+                </button>
+                <button class="btn-action btn-download" (click)="$event.stopPropagation(); downloadInvoice(payment)"
+                  title="Download Invoice">
+                  <i class="fas fa-file-download"></i>
+                </button>
+                <button class="btn-action btn-refund" (click)="$event.stopPropagation(); openRefundModal(payment)"
+                  *ngIf="payment.status === 'completed'" title="Process Refund">
+                  <i class="fas fa-undo-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredPayments.length === 0">
+      <i class="fas fa-file-invoice-dollar"></i>
+      <h3>No payments found</h3>
+      <p>{{ searchTerm ? 'No transactions match your search.' : 'The payment history is empty.' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Details Modal -->
+<div class="modal fade" [class.show]="showDetailsModal" *ngIf="showDetailsModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt text-primary me-2"></i> Transaction Details
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div *ngIf="selectedPayment">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Transaction ID</label>
+              <span class="form-control-static font-monospace">{{ selectedPayment.razorpayPaymentId || selectedPayment.transactionDetails?.transactionId || '—' }}</span>
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Booking Reference</label>
+              <span class="form-control-static font-weight-bold text-primary">{{ selectedPayment.bookingId?.bookingNumber || 'N/A' }}</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Amount</label>
+              <span class="form-control-static amount text-success">{{ selectedPayment.amount | currency:'INR':'symbol':'1.2-2' }}</span>
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Payment Method</label>
+              <span class="form-control-static">{{ selectedPayment.paymentMethod | titlecase }}</span>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Status</label>
+              <div>
+                <span class="badge" [ngClass]="getStatusBadgeClass(selectedPayment.status)">{{ selectedPayment.status |
+                  titlecase }}</span>
+              </div>
+            </div>
+            <div class="col-md-6 mb-4">
+              <label class="form-label">Date & Time</label>
+              <span class="form-control-static">{{ formatDate(selectedPayment.createdAt) }}</span>
+            </div>
+          </div>
+          <!-- Refund Details if applicable -->
+          <div class="row" *ngIf="selectedPayment.status === 'refunded'">
+            <div class="col-12 mt-2">
+              <div class="alert alert-info border-0 bg-light-info">
+                <h6 class="alert-heading font-weight-700">Refund Information</h6>
+                <p class="mb-1"><strong>Refund ID:</strong> {{ selectedPayment.refundDetails?.refundId || '—' }}</p>
+                <p class="mb-0"><strong>Reason:</strong> {{ selectedPayment.refundDetails?.refundReason || 'N/A' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary px-4" (click)="closeDetailsModal()">
+            Close
+          </button>
+          <button type="button" class="btn btn-primary px-4" (click)="downloadInvoice(selectedPayment)">
+            <i class="fas fa-file-download me-2"></i> Download Invoice
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refund Modal -->
+  <div class="modal fade" [class.show]="showRefundModal" *ngIf="showRefundModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title text-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i> Process Refund
+          </h5>
+          <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeRefundModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div *ngIf="selectedPayment">
+          <div class="modal-body">
+            <div class="alert alert-danger border-0 bg-light-danger mb-4">
+              <i class="fas fa-exclamation-circle me-2"></i>
+              This will refund the payment to the original source. This action cannot be undone.
+            </div>
+            <div class="mb-3">
+              <p class="mb-1 text-muted small uppercase font-weight-700">Transaction ID</p>
+              <p class="font-monospace">{{ selectedPayment.razorpayPaymentId || selectedPayment.transactionDetails?.transactionId || '—' }}</p>
+            </div>
+            <div class="mb-4">
+              <p class="mb-1 text-muted small uppercase font-weight-700">Amount to Refund</p>
+              <h4 class="amount text-danger">{{ selectedPayment.amount | currency:'INR':'symbol':'1.2-2' }}</h4>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Reason for Refund</label>
+              <textarea class="form-control" placeholder="Optional..." rows="2"
+                [(ngModel)]="refundReasonText"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top-0 pt-0">
+            <button type="button" class="btn btn-light px-4" (click)="closeRefundModal()">
+              Abort
+            </button>
+            <button type="button" class="btn btn-danger px-4" (click)="processRefund()" [disabled]="isLoading">
+              {{ isLoading ? 'Processing...' : 'Confirm Refund' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Backdrops -->
+  <div class="modal-backdrop fade" [class.show]="showDetailsModal || showRefundModal"
+    *ngIf="showDetailsModal || showRefundModal"></div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container">
+    <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage">
+      <i class="fas fa-check-circle me-3"></i>
+      <span>{{ successMessage }}</span>
+      <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="successMessage = ''">
+        <i class="fas fa-times text-success"></i>
+      </button>
+    </div>
+    <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle me-3"></i>
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="errorMessage = ''">
+        <i class="fas fa-times text-danger"></i>
+      </button>
+    </div>
+  </div>

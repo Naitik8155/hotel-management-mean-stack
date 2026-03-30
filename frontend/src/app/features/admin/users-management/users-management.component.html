@@ -1,0 +1,276 @@
+<div class="users-management-container">
+  <!-- Header Section -->
+  <div class="management-header">
+    <div class="header-content">
+      <h1>Users Management</h1>
+      <p class="subtitle">Monitor system access, manage roles, and oversee user activity.</p>
+    </div>
+    <button class="btn-refresh" (click)="loadUsers()">
+      <i class="fas fa-sync-alt"></i>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  <!-- Statistics Cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <p>Total Users</p>
+      <h3>{{ getTotalUsers() }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Active Users</p>
+      <h3>{{ getActiveUsers() }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Blocked Users</p>
+      <h3>{{ getBlockedUsers() }}</h3>
+    </div>
+    <div class="stat-card">
+      <p>Admins</p>
+      <h3>{{ getAdminCount() }}</h3>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-bar">
+      <i class="fas fa-search"></i>
+      <input type="text" placeholder="Search by member name, email, or contact number..." [(ngModel)]="searchTerm"
+        (input)="filterUsers()" />
+    </div>
+
+    <div class="filter-controls">
+      <select class="form-select" [(ngModel)]="selectedRole" (change)="filterUsers()">
+        <option value="">Filter by Role</option>
+        <option value="user">User</option>
+        <option value="staff">Staff</option>
+        <option value="admin">Admin</option>
+      </select>
+
+      <select class="form-select" [(ngModel)]="selectedStatus" (change)="filterUsers()">
+        <option value="">Account Status</option>
+        <option value="active">Active</option>
+        <option value="blocked">Blocked</option>
+      </select>
+
+      <button class="btn-reset" (click)="resetFilters()">
+        <i class="fas fa-undo"></i>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-table-section">
+    <div class="table-responsive">
+      <table class="table users-table" *ngIf="filteredUsers.length > 0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Role</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of filteredUsers; let i = index" (click)="viewDetails(user)">
+            <td><span class="text-muted">{{ i + 1 }}</span></td>
+            <td>
+              <div class="user-info">
+                <div class="user-avatar">{{ user.name.charAt(0).toUpperCase() }}</div>
+                <span class="user-name">{{ user.name }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="text-primary font-weight-500">{{ user.email }}</span>
+            </td>
+            <td>{{ user.phone || '—' }}</td>
+            <td>
+              <span class="badge" [ngClass]="'badge-' + user.role">
+                <i class="fas" [ngClass]="{
+                  'fa-user-shield': user.role === 'admin',
+                  'fa-user-tie': user.role === 'staff',
+                  'fa-user': user.role === 'user'
+                }"></i>
+                {{ user.role | titlecase }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [ngClass]="user.isActive ? 'badge-active' : 'badge-blocked'">
+                <i class="fas" [ngClass]="user.isActive ? 'fa-check-circle' : 'fa-ban'"></i>
+                {{ user.isActive ? 'Active' : 'Blocked' }}
+              </span>
+            </td>
+            <td>{{ formatDate(user.createdAt) }}</td>
+            <td>
+              <div class="action-buttons">
+                <!-- Stop propagation to prevent row click from triggering when clicking individual buttons -->
+                <button class="btn-action btn-view" (click)="$event.stopPropagation(); viewDetails(user)"
+                  title="View Details">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-action btn-role" (click)="$event.stopPropagation(); openRoleModal(user)"
+                  title="Edit Role">
+                  <i class="fas fa-user-edit"></i>
+                </button>
+                <button class="btn-action" [ngClass]="user.isActive ? 'btn-block' : 'btn-unblock'"
+                  (click)="$event.stopPropagation(); toggleUserStatus(user)"
+                  [title]="user.isActive ? 'Block User' : 'Unblock User'">
+                  <i class="fas" [ngClass]="user.isActive ? 'fa-user-slash' : 'fa-user-check'"></i>
+                </button>
+                <button class="btn-action btn-block" (click)="$event.stopPropagation(); deleteUser(user)"
+                  title="Delete User">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUsers.length === 0">
+      <i class="fas fa-users-slash"></i>
+      <h3>No users found</h3>
+      <p>{{ searchTerm ? 'No users match your search.' : 'The user list is empty.' }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="detailsModal" [class.show]="showDetailsModal" *ngIf="showDetailsModal">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-circle text-primary"></i> User Details
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Full Name</label>
+            <span class="form-control-static">{{ selectedUser.name }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Role</label>
+            <div>
+              <span class="badge" [ngClass]="'badge-' + selectedUser.role">
+                {{ selectedUser.role | titlecase }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Email Address</label>
+            <span class="form-control-static">{{ selectedUser.email }}</span>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Contact Number</label>
+            <span class="form-control-static">{{ selectedUser.phone || 'Data not provided' }}</span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Account Status</label>
+            <div>
+              <span class="badge" [ngClass]="selectedUser.isActive ? 'badge-active' : 'badge-blocked'">
+                {{ selectedUser.isActive ? 'Active Member' : 'Blocked Account' }}
+              </span>
+            </div>
+          </div>
+          <div class="col-md-6 mb-4">
+            <label class="form-label">Registration Date</label>
+            <span class="form-control-static">{{ formatDate(selectedUser.createdAt) }}</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary px-4" (click)="closeDetailsModal()">
+          Close
+        </button>
+        <button type="button" class="btn btn-primary px-4" (click)="openRoleModal(selectedUser)">
+          <i class="fas fa-user-tag me-2"></i> Elevate/Change Role
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Role Update Modal -->
+<div class="modal fade" id="roleModal" [class.show]="showRoleModal" *ngIf="showRoleModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-user-cog me-2"></i> Update Role
+        </h5>
+        <button type="button" class="btn-close border-0 bg-transparent shadow-none" (click)="closeRoleModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form [formGroup]="roleForm" (ngSubmit)="updateRole()">
+        <div class="modal-body">
+          <div class="mb-4">
+            <label class="form-label">Select New Role *</label>
+            <select class="form-select w-100" formControlName="role"
+              [class.is-invalid]="roleForm.get('role')?.invalid && roleForm.get('role')?.touched">
+              <option value="">Select role</option>
+              <option *ngFor="let role of roles" [value]="role">{{ role | titlecase }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="roleForm.get('role')?.invalid">Selection is mandatory.</div>
+          </div>
+          <div class="alert alert-info border-0 bg-light-info mb-0">
+            <i class="fas fa-info-circle me-2 text-primary"></i> Role changes affect system permissions immediately.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-light px-4" (click)="closeRoleModal()">
+            Discard
+          </button>
+          <button type="submit" class="btn btn-primary px-4" [disabled]="roleForm.invalid || isSaving">
+            <span *ngIf="!isSaving">
+              Update Permission
+            </span>
+            <span *ngIf="isSaving">
+              <i class="fas fa-circle-notch fa-spin me-2"></i> Syncing...
+            </span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Backdrops -->
+<div class="modal-backdrop fade" [class.show]="showDetailsModal || showRoleModal"
+  *ngIf="showDetailsModal || showRoleModal"></div>
+
+<!-- Toast Notifications -->
+<div class="toast-container">
+  <div class="alert alert-success d-flex align-items-center" *ngIf="successMessage">
+    <i class="fas fa-check-circle me-3"></i>
+    <span>{{ successMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="successMessage = ''">
+      <i class="fas fa-times text-success"></i>
+    </button>
+  </div>
+  <div class="alert alert-danger d-flex align-items-center" *ngIf="errorMessage">
+    <i class="fas fa-exclamation-circle me-3"></i>
+    <span>{{ errorMessage }}</span>
+    <button type="button" class="btn-close ms-auto bg-transparent border-0" (click)="errorMessage = ''">
+      <i class="fas fa-times text-danger"></i>
+    </button>
+  </div>
+</div>

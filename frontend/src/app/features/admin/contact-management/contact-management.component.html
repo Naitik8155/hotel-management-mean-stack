@@ -1,0 +1,145 @@
+<div class="contact-management-container">
+  <div class="header">
+    <h1>Contact Messages</h1>
+    <p class="subtitle">Review and respond to guest inquiries.</p>
+  </div>
+
+  <div class="management-content">
+    <div class="contacts-list">
+      <h2>Messages ({{ contacts.length }})</h2>
+      <div *ngIf="loading" class="loading">Loading contacts...</div>
+      <div *ngIf="!loading && contacts.length === 0" class="no-contacts">
+        No contact messages yet.
+      </div>
+      <div *ngIf="!loading && contacts.length > 0" class="list">
+        <div 
+          *ngFor="let contact of contacts" 
+          (click)="selectContact(contact)"
+          [class.selected]="selectedContact?._id === contact._id"
+          class="contact-item"
+        >
+          <div class="contact-header-item">
+            <div class="contact-info">
+              <p class="name">{{ contact.name }}</p>
+              <p class="email">{{ contact.email }}</p>
+            </div>
+            <span [ngClass]="getStatusClass(contact.status)" class="badge">
+              {{ contact.status | titlecase }}
+            </span>
+          </div>
+          <p class="subject">{{ contact.subject }}</p>
+          <p class="date">{{ contact.createdAt | date: 'short' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="contact-details">
+      <div *ngIf="!selectedContact" class="no-selection">
+        <p>Select a message to view details</p>
+      </div>
+
+      <div *ngIf="selectedContact" class="details">
+        <div class="detail-header">
+          <h2>{{ selectedContact.name }}</h2>
+          <span [ngClass]="getStatusClass(selectedContact.status)" class="badge-large">
+            {{ selectedContact.status | titlecase }}
+          </span>
+        </div>
+
+        <div class="detail-section">
+          <h3>Contact Information</h3>
+          <div class="info-row">
+            <label>Name:</label>
+            <span>{{ selectedContact.name }}</span>
+          </div>
+          <div class="info-row">
+            <label>Email:</label>
+            <span>
+              <a href="mailto:{{ selectedContact.email }}">{{ selectedContact.email }}</a>
+            </span>
+          </div>
+          <div class="info-row">
+            <label>Phone:</label>
+            <span>
+              <a href="tel:{{ selectedContact.phone }}">{{ selectedContact.phone }}</a>
+            </span>
+          </div>
+          <div class="info-row">
+            <label>Received:</label>
+            <span>{{ selectedContact.createdAt | date: 'medium' }}</span>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Message</h3>
+          <div class="message-box">
+            <p class="subject-line"><strong>Subject:</strong> {{ selectedContact.subject }}</p>
+            <p class="message-content">{{ selectedContact.message }}</p>
+          </div>
+        </div>
+
+        <div *ngIf="selectedContact.adminResponse" class="detail-section response-section">
+          <h3>Your Response</h3>
+          <div class="response-box">
+            <p class="response-content">{{ selectedContact.adminResponse }}</p>
+            <p class="response-date">Sent: {{ selectedContact.respondedAt | date: 'medium' }}</p>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Actions</h3>
+          <div class="actions">
+            <select 
+              [value]="selectedContact.status" 
+              (change)="updateStatus(selectedContact._id, $any($event.target).value)"
+              class="status-select"
+            >
+              <option value="new">New</option>
+              <option value="in-progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+            </select>
+
+            <div *ngIf="!showResponseForm" class="response-action">
+              <button 
+                *ngIf="!selectedContact.adminResponse"
+                (click)="showResponse()" 
+                class="btn btn-primary"
+              >
+                Send Response
+              </button>
+            </div>
+
+            <div *ngIf="showResponseForm && !selectedContact.adminResponse" class="response-form">
+              <form [formGroup]="responseForm" (ngSubmit)="sendResponse()">
+                <div class="form-group">
+                  <label for="response">Response Message</label>
+                  <textarea 
+                    id="response"
+                    formControlName="responseMessage"
+                    placeholder="Enter your response..."
+                    class="form-control"
+                    rows="6"
+                  ></textarea>
+                  <div *ngIf="responseForm.get('responseMessage')?.errors?.['required']" class="error">
+                    Response message is required
+                  </div>
+                  <div *ngIf="responseForm.get('responseMessage')?.errors?.['minlength']" class="error">
+                    Response must be at least 10 characters
+                  </div>
+                </div>
+                <div class="form-actions">
+                  <button type="submit" [disabled]="responseForm.invalid" class="btn btn-success">
+                    Send Response
+                  </button>
+                  <button type="button" (click)="cancelResponse()" class="btn btn-secondary">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
